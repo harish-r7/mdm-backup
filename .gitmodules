@@ -1,0 +1,6 @@
+[submodule "hmdm-android"]
+	path = hmdm-android
+	url = https://github.com/harish-r7/hmdm-android.git
+[submodule "hmdm-server"]
+	path = hmdm-server
+	url = https://github.com/harish-r7/hmdm-server.git
