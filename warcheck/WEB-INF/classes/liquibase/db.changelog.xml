@@ -2609,4 +2609,19 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="14.05.26-12:45-lock-default-launcher" author="custom" context="common">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="configurations" columnName="lockdefaultlauncher"/>
+            </not>
+        </preConditions>
+        <comment>Column,new: configurations#lockDefaultLauncher</comment>
+        <sql>
+            ALTER TABLE configurations ADD COLUMN lockDefaultLauncher BOOLEAN NOT NULL DEFAULT false;
+        </sql>
+        <rollback>
+            ALTER TABLE configurations DROP COLUMN lockDefaultLauncher;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

@@ -1,7 +1,6 @@
 // Localization completed
 angular.module('headwind-kiosk')
-    .controller('DevicesTabController', function ($scope, $rootScope, $state, $modal, $interval, $cookies, $window, $filter, $timeout,
-                                                  confirmModal, deviceService, groupService, settingsService, hintService,
+    .controller('DevicesTabController', function ($scope, $rootScope, $state, $modal, $interval, $cookies, $window, $filter, $timeout,$http,confirmModal, deviceService, groupService, settingsService, hintService,
                                                   authService, pluginService, configurationService, alertService,
                                                   spinnerService, localization, utils) {
 
@@ -19,7 +18,7 @@ angular.module('headwind-kiosk')
 
             $cookies.put('deviceSearch', JSON.stringify(searchData));
         };
-
+	
         var restoreDeviceSearchParams = function() {
             if ($cookies.get('deviceSearch')) {
                 var deviceSearch = JSON.parse($cookies.get('deviceSearch'));
@@ -408,6 +407,21 @@ angular.module('headwind-kiosk')
             var url = device.configuration.baseUrl + "/#/qr/" + device.configuration.qrCodeKey + "/" + number;
             $window.open(url, "_self");
         };
+	$scope.forceSyncDevice = function(device) {
+    if (!device || !device.number) {
+        alert('Device number not found');
+        return;
+    }
+
+    var number = device.number.replace(/\//g, "~2F");
+
+    $http.post('rest/private/devices/' + number + '/force-sync')
+        .then(function(response) {
+            alert('Force sync command sent to ' + device.number);
+        }, function(error) {
+            alert('Failed to send force sync command');
+        });
+};
 
         $scope.interval = $interval(function () {
             $scope.search(true);
@@ -1357,7 +1371,7 @@ angular.module('headwind-kiosk')
                 $scope.errorMessage = localization.localize('error.request.failure');
             });
         };
-
+	
         $scope.notifyDevice = function () {
             $scope.saving = true;
             $scope.errorMessage = undefined;
