@@ -417,7 +417,13 @@ angular.module('headwind-kiosk')
 
     $http.post('rest/private/devices/' + number + '/force-sync')
         .then(function(response) {
-            alert('Force sync command sent to ' + device.number);
+            if (response.data && response.data.status === 'OK') {
+                alert('Force sync command sent to ' + device.number);
+                $scope.search(true);
+            } else {
+                alert('Failed to send force sync command: ' +
+                    (response.data && response.data.message ? response.data.message : 'server error'));
+            }
         }, function(error) {
             alert('Failed to send force sync command');
         });
