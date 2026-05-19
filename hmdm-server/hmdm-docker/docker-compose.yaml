@@ -1,0 +1,37 @@
+services:
+  postgresql:
+    image: postgres:12-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${SQL_USER}
+      POSTGRES_PASSWORD: ${SQL_PASS}
+      POSTGRES_DB: ${SQL_BASE}
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data
+
+  hmdm:
+    image: headwindmdm/hmdm:0.1.8
+    ports:
+      - "80:8080"
+      - "31000:31000"
+    volumes:
+      - ./volumes/work:/usr/local/tomcat/work
+      - ./volumes/hmdm-config:/usr/local/tomcat/conf/Catalina/localhost
+    environment:
+      SQL_HOST: postgresql
+      SQL_USER: ${SQL_USER}
+      SQL_BASE: ${SQL_BASE}
+      SQL_PASS: ${SQL_PASS}
+      BASE_DOMAIN: ${BASE_DOMAIN}
+      LOCAL_IP: ${LOCAL_IP}
+      PROTOCOL: ${PROTOCOL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      SHARED_SECRET: ${SHARED_SECRET}
+      HMDM_VARIANT: ${HMDM_VARIANT}
+      DOWNLOAD_CREDENTIALS: ${DOWNLOAD_CREDENTIALS}
+      HMDM_URL: ${HMDM_URL}
+      CLIENT_VERSION: ${CLIENT_VERSION}
+      FORCE_RECONFIGURE: ${FORCE_RECONFIGURE}
+    depends_on:
+      - postgresql
