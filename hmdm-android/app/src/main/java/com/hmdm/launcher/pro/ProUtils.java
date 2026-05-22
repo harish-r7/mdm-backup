@@ -21,6 +21,7 @@ package com.hmdm.launcher.pro;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,6 +29,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
+import android.os.Process;
 import android.util.Log;
 import android.view.View;
 
@@ -35,10 +37,15 @@ import com.hmdm.launcher.AdminReceiver;
 import com.hmdm.launcher.Const;
 import com.hmdm.launcher.R;
 import com.hmdm.launcher.helper.SettingsHelper;
+import com.hmdm.launcher.json.Application;
 import com.hmdm.launcher.json.ServerConfig;
 import com.hmdm.launcher.util.Utils;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * These functions are available in Pro-version only
@@ -83,8 +90,26 @@ public class ProUtils {
 
     // Pro-version
     public static boolean checkUsageStatistics(Context context) {
-        // Stub
-        return true;
+        if (context == null) {
+            return false;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return true;
+        }
+        try {
+            AppOpsManager appOpsManager = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+            if (appOpsManager == null) {
+                return false;
+            }
+            int mode = appOpsManager.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    Process.myUid(),
+                    context.getPackageName());
+            return mode == AppOpsManager.MODE_ALLOWED;
+        } catch (Exception e) {
+            Log.w(Const.LOG_TAG, "Failed to check usage statistics permission", e);
+            return false;
+        }
     }
 
     // Add a transparent view on top of the status bar which prevents user interaction with the status bar
@@ -142,6 +167,85 @@ public class ProUtils {
         return false;
     }
 
+    private static String[] getKioskAllowedPackages(Activity activity, String kioskApp, boolean enableSettings) {
+        Set<String> packages = new LinkedHashSet<>();
+        if (activity == null) {
+            return new String[]{};
+        }
+
+        packages.add(activity.getPackageName());
+        if (kioskApp != null && kioskApp.trim().length() > 0) {
+            packages.add(kioskApp.trim());
+        }
+        if (enableSettings) {
+            packages.add("com.android.settings");
+        }
+
+        try {
+            ServerConfig config = SettingsHelper.getInstance(activity).getConfig();
+            if (config != null && config.getApplications() != null) {
+                PackageManager packageManager = activity.getPackageManager();
+                for (Application application : config.getApplications()) {
+                    if (application == null || application.isRemove() || !application.isShowIcon()) {
+                        continue;
+                    }
+                    if (application.getType() != null && !Application.TYPE_APP.equals(application.getType())) {
+                        continue;
+                    }
+                    String pkg = application.getPkg();
+                    if (pkg == null || pkg.trim().length() == 0) {
+                        continue;
+                    }
+                    pkg = pkg.trim();
+                    if (packageManager.getLaunchIntentForPackage(pkg) != null) {
+                        packages.add(pkg);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(Const.LOG_TAG, "Failed to build kiosk package whitelist", e);
+        }
+
+        List<String> result = new ArrayList<>(packages);
+        return result.toArray(new String[result.size()]);
+    }
+
+    private static boolean isEnabled(Boolean value) {
+        return value != null && value;
+    }
+
+    private static int getKioskLockTaskFeatures(Activity activity) {
+        int features = DevicePolicyManager.LOCK_TASK_FEATURE_NONE;
+        try {
+            ServerConfig config = SettingsHelper.getInstance(activity).getConfig();
+            if (config == null) {
+                return features;
+            }
+
+            if (isEnabled(config.getKioskHome()) || isEnabled(config.getKioskRecents())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+            }
+            if (isEnabled(config.getKioskRecents())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
+            }
+            if (isEnabled(config.getKioskNotifications())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS;
+            }
+            if (isEnabled(config.getKioskSystemInfo())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
+            }
+            if (isEnabled(config.getKioskKeyguard())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD;
+            }
+            if (!isEnabled(config.getKioskLockButtons())) {
+                features |= DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
+            }
+        } catch (Exception e) {
+            Log.w(Const.LOG_TAG, "Failed to build kiosk lock-task features", e);
+        }
+        return features;
+    }
+
     public static Intent getKioskAppIntent(String kioskApp, Activity activity) {
         if (activity == null || kioskApp == null) {
             return null;
@@ -179,9 +283,9 @@ public class ProUtils {
                 return false;
             }
             ComponentName admin = new ComponentName(activity, AdminReceiver.class);
-            dpm.setLockTaskPackages(admin, new String[]{activity.getPackageName()});
+            dpm.setLockTaskPackages(admin, getKioskAllowedPackages(activity, activity.getPackageName(), false));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
+                dpm.setLockTaskFeatures(admin, getKioskLockTaskFeatures(activity));
             }
             activity.startLockTask();
             return true;
@@ -214,9 +318,9 @@ public class ProUtils {
                 return false;
             }
             ComponentName admin = new ComponentName(activity, AdminReceiver.class);
-            dpm.setLockTaskPackages(admin, new String[]{kioskApp});
+            dpm.setLockTaskPackages(admin, getKioskAllowedPackages(activity, kioskApp, enableSettings));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
+                dpm.setLockTaskFeatures(admin, getKioskLockTaskFeatures(activity));
             }
             Intent intent = getKioskAppIntent(kioskApp, activity);
             if (intent == null) {
@@ -243,7 +347,7 @@ public class ProUtils {
             }
             ComponentName admin = new ComponentName(activity, AdminReceiver.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
+                dpm.setLockTaskFeatures(admin, getKioskLockTaskFeatures(activity));
             }
         } catch (Exception e) {
             Log.w(Const.LOG_TAG, "Failed to update kiosk options", e);
@@ -262,11 +366,7 @@ public class ProUtils {
             }
             ComponentName admin = new ComponentName(activity, AdminReceiver.class);
             if (kioskApp != null && kioskApp.trim().length() > 0) {
-                if (kioskApp.equals(activity.getPackageName())) {
-                    dpm.setLockTaskPackages(admin, new String[]{activity.getPackageName()});
-                } else {
-                    dpm.setLockTaskPackages(admin, new String[]{activity.getPackageName(), kioskApp});
-                }
+                dpm.setLockTaskPackages(admin, getKioskAllowedPackages(activity, kioskApp, enableSettings));
             } else {
                 dpm.setLockTaskPackages(admin, new String[]{});
             }

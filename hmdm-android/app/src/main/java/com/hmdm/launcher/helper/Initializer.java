@@ -135,8 +135,9 @@ public class Initializer {
         // Not allowed to start service Intent { cmp=com.hmdm.launcher/.service.StatusControlService }: app is in background
         // Let's just ignore these exceptions for now
         SharedPreferences preferences = context.getApplicationContext().getSharedPreferences(Const.PREFERENCES, MODE_PRIVATE);
-        // Foreground apps checks are not available in a free version: services are the stubs
-        if (preferences.getInt(Const.PREFERENCES_USAGE_STATISTICS, Const.PREFERENCES_OFF) == Const.PREFERENCES_ON) {
+        // Starts app usage session logging when Usage Access is enabled.
+        if (ProUtils.checkUsageStatistics(context)) {
+            preferences.edit().putInt(Const.PREFERENCES_USAGE_STATISTICS, Const.PREFERENCES_ON).apply();
             try {
                 context.startService(new Intent(context, CheckForegroundApplicationService.class));
             } catch (Exception e) {

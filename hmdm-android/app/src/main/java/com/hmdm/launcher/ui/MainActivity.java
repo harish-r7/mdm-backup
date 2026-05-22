@@ -97,6 +97,7 @@ import com.hmdm.launcher.helper.SettingsHelper;
 import com.hmdm.launcher.json.Application;
 import com.hmdm.launcher.json.DeviceInfo;
 import com.hmdm.launcher.json.RemoteFile;
+import com.hmdm.launcher.json.RemoteLogItem;
 import com.hmdm.launcher.json.ServerConfig;
 import com.hmdm.launcher.policy.LauncherProtectionPolicy;
 import com.hmdm.launcher.pro.ProUtils;
@@ -145,6 +146,10 @@ public class MainActivity
         ConfigUpdater.UINotifier {
 
     private static final int PERMISSIONS_REQUEST = 1000;
+    private static final String PREF_LAUNCHED_APP_TARGET = "APP_USAGE_LAUNCHED_TARGET";
+    private static final String PREF_LAUNCHED_APP_NAME = "APP_USAGE_LAUNCHED_NAME";
+    private static final String PREF_LAUNCHED_APP_STARTED_AT = "APP_USAGE_LAUNCHED_STARTED_AT";
+    private static final String LOG_PREFIX_APP_USAGE = "APP_USAGE";
 
     private ActivityMainBinding binding;
     private SettingsHelper settingsHelper;
@@ -504,6 +509,7 @@ public class MainActivity
     @Override
 protected void onResume() {
     super.onResume();
+    closeLauncherTrackedAppSession();
 
     SharedPreferences customPolicyPrefs =
             getSharedPreferences("custom_policy", MODE_PRIVATE);
@@ -722,24 +728,8 @@ protected void onResume() {
             return false;
         }
 
-        DevicePolicyManager dpm =
-                (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-
-        if (dpm == null) {
-            Log.d("KIOSK_TEST", "DevicePolicyManager is null");
-            return false;
-        }
-
-        ComponentName admin =
-                new ComponentName(this, AdminReceiver.class);
-
-        dpm.setLockTaskPackages(admin, new String[]{getPackageName()});
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            dpm.setLockTaskFeatures(admin, DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
-            Log.d("KIOSK_TEST", "Lock task features set to NONE");
-        }
-
+        ProUtils.updateKioskAllowedApps(kioskApp, this, false);
+        ProUtils.updateKioskOptions(this);
         startLockTask();
 
         Log.d("KIOSK_TEST", "Headwind self kiosk lock-task started successfully");
@@ -752,8 +742,8 @@ protected void onResume() {
 }
 
     private void startServices() {
-        // Foreground apps checks are not available in a free version: services are the stubs
-        if (preferences.getInt(Const.PREFERENCES_USAGE_STATISTICS, Const.PREFERENCES_OFF) == Const.PREFERENCES_ON) {
+        if (ProUtils.checkUsageStatistics(this)) {
+            preferences.edit().putInt(Const.PREFERENCES_USAGE_STATISTICS, Const.PREFERENCES_ON).apply();
             startService(new Intent(MainActivity.this, CheckForegroundApplicationService.class));
         }
         if (BuildConfig.USE_ACCESSIBILITY &&
@@ -950,7 +940,7 @@ protected void onResume() {
         }
 
         int usageStatisticsMode = preferences.getInt( Const.PREFERENCES_USAGE_STATISTICS, - 1 );
-        if (ProUtils.isPro() && usageStatisticsMode == -1 && needRequestUsageStats()) {
+        if (usageStatisticsMode == -1 && needRequestUsageStats()) {
             if ( checkUsageStatistics() ) {
                 preferences.
                         edit().
@@ -1181,12 +1171,9 @@ protected void onResume() {
             // So we request permissions anyway.
             return true;
         }
-        // Usage stats is only required to detect unwanted apps
-        // when permissive mode is off and kiosk mode is also off
-        return !config.isPermissive() && !config.isKioskMode();
+        return true;
     }
 
-    // Access to usage statistics is required in the Pro-version only
     private boolean checkUsageStatistics() {
         if (!ProUtils.checkUsageStatistics(this)) {
             if (SystemUtils.autoSetUsageStatsPermission(this, getPackageName())) {
@@ -2734,7 +2721,66 @@ protected void onResume() {
 
     @Override
     public void onAppChoose( @NonNull AppInfo resolveInfo ) {
+        startLauncherTrackedAppSession(resolveInfo);
+    }
 
+    private void startLauncherTrackedAppSession(@NonNull AppInfo appInfo) {
+        closeLauncherTrackedAppSession();
+
+        String target;
+        if (appInfo.type == AppInfo.TYPE_APP) {
+            target = appInfo.packageName;
+        } else if (appInfo.type == AppInfo.TYPE_WEB) {
+            target = appInfo.url;
+        } else {
+            target = appInfo.intent;
+        }
+
+        if (target == null || target.trim().length() == 0) {
+            return;
+        }
+
+        preferences.edit()
+                .putString(PREF_LAUNCHED_APP_TARGET, target)
+                .putString(PREF_LAUNCHED_APP_NAME, appInfo.name != null ? appInfo.name.toString() : target)
+                .putLong(PREF_LAUNCHED_APP_STARTED_AT, System.currentTimeMillis())
+                .apply();
+    }
+
+    private void closeLauncherTrackedAppSession() {
+        String target = preferences.getString(PREF_LAUNCHED_APP_TARGET, null);
+        long startedAt = preferences.getLong(PREF_LAUNCHED_APP_STARTED_AT, 0L);
+        if (target == null || startedAt <= 0) {
+            return;
+        }
+
+        long closedAt = System.currentTimeMillis();
+        if (closedAt <= startedAt) {
+            return;
+        }
+
+        String appName = preferences.getString(PREF_LAUNCHED_APP_NAME, target);
+        long durationMs = closedAt - startedAt;
+        String message = LOG_PREFIX_APP_USAGE +
+                " target=" + target +
+                " app=\"" + appName.replace("\"", "'") + "\"" +
+                " openedAt=" + startedAt +
+                " closedAt=" + closedAt +
+                " durationMs=" + durationMs +
+                " source=launcher";
+
+        RemoteLogItem item = new RemoteLogItem();
+        item.setTimestamp(closedAt);
+        item.setLogLevel(Const.LOG_INFO);
+        item.setPackageId(getPackageName());
+        item.setMessage(message);
+        RemoteLogger.postLog(this, item);
+
+        preferences.edit()
+                .remove(PREF_LAUNCHED_APP_TARGET)
+                .remove(PREF_LAUNCHED_APP_NAME)
+                .remove(PREF_LAUNCHED_APP_STARTED_AT)
+                .apply();
     }
 
     @Override
