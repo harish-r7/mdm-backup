@@ -20,9 +20,16 @@ if [ ! -z "$LOCAL_IP" ]; then
     fi
 fi
 
+LOCAL_HMDM_WAR=/opt/hmdm/local/launcher.war
+LOCAL_HMDM_WAR_PRESENT=
 HMDM_WAR="$(basename -- $HMDM_URL)"
 
-if [ -f "$CACHE_DIR/$HMDM_WAR" ] && [ "$FORCE_RECONFIGURE" = "true" ]; then
+if [ -f "$LOCAL_HMDM_WAR" ]; then
+    echo "Using local HMDM WAR: $LOCAL_HMDM_WAR"
+    cp $LOCAL_HMDM_WAR $CACHE_DIR/launcher.war
+    HMDM_WAR=launcher.war
+    LOCAL_HMDM_WAR_PRESENT=true
+elif [ -f "$CACHE_DIR/$HMDM_WAR" ] && [ "$FORCE_RECONFIGURE" = "true" ]; then
     rm -f $CACHE_DIR/$HMDM_WAR
 fi
 
@@ -33,7 +40,7 @@ if [ ! -f "$CACHE_DIR/$HMDM_WAR" ]; then
     fi
 fi
 
-if [ ! -f "$TOMCAT_DIR/webapps/ROOT.war" ] || [ "$FORCE_RECONFIGURE" = "true" ]; then
+if [ ! -f "$TOMCAT_DIR/webapps/ROOT.war" ] || [ "$FORCE_RECONFIGURE" = "true" ] || [ "$LOCAL_HMDM_WAR_PRESENT" = "true" ]; then
     cp $CACHE_DIR/$HMDM_WAR $TOMCAT_DIR/webapps/ROOT.war
 fi
 

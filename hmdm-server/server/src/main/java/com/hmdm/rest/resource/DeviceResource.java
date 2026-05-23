@@ -199,6 +199,30 @@ public class DeviceResource {
     }
 
     // =================================================================================================================
+    @ApiOperation(
+            value = "Wipe device",
+            notes = "Sends a factory reset command to the selected device",
+            response = Void.class
+    )
+    @POST
+    @Path("/{number}/wipe-device")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response wipeDevice(@PathParam("number") @ApiParam("Device number") String number) {
+        try {
+            number = number.replaceAll("~2F", "/");
+            Device device = this.deviceDAO.getDeviceByNumber(number);
+            if (device == null) {
+                return Response.DEVICE_NOT_FOUND_ERROR();
+            }
+            this.pushService.wipeDevice(device.getId());
+            return Response.OK();
+        } catch (Exception e) {
+            log.error("Failed to wipe device: " + number, e);
+            return Response.INTERNAL_ERROR();
+        }
+    }
+
+    // =================================================================================================================
     /**
      * <p>Gets the list of device ids/names matching the specified string filter for autocompletions.</p>
      *

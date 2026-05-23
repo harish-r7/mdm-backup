@@ -11,13 +11,17 @@ services:
       - ./volumes/db:/var/lib/postgresql/data
 
   hmdm:
-    image: headwindmdm/hmdm:0.1.8
+    build:
+      context: ..
+      dockerfile: hmdm-docker/Dockerfile
+    image: hmdm-local:latest
     ports:
       - "80:8080"
       - "31000:31000"
     volumes:
       - ./volumes/work:/usr/local/tomcat/work
       - ./volumes/hmdm-config:/usr/local/tomcat/conf/Catalina/localhost
+      - ../server/target/launcher.war:/opt/hmdm/local/launcher.war:ro
     environment:
       SQL_HOST: postgresql
       SQL_USER: ${SQL_USER}

@@ -78,6 +78,16 @@ public class PushService {
     }
 
     /**
+     * <p>Sends the remote wipe message to specified device.</p>
+     *
+     * @param deviceId an ID of device to be wiped.
+     */
+    @Transactional
+    public void wipeDevice(Integer deviceId) {
+        sendSimpleMessage(deviceId, PushMessage.TYPE_WIPE_DEVICE);
+    }
+
+    /**
      * <p>Sends the simple message of a certain type to specified device.</p>
      *
      * @param deviceId an ID of device to be notified.

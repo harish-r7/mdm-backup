@@ -12,6 +12,7 @@ RUN apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /usr/local/tomcat/conf/Catalina/localhost
 RUN mkdir -p /usr/local/tomcat/ssl
+RUN mkdir -p /opt/hmdm/local
 
 # Set to 1 to force updating the config files
 # If not set, they will be created only if there's no files
@@ -57,9 +58,11 @@ EXPOSE 8080
 EXPOSE 8443
 EXPOSE 31000
 
-COPY docker-entrypoint.sh /
-COPY update-web-app-docker.sh /opt/hmdm/
-COPY tomcat_conf/server.xml /usr/local/tomcat/conf/server.xml 
-ADD templates /opt/hmdm/templates/
+COPY hmdm-docker/docker-entrypoint.sh /
+COPY hmdm-docker/update-web-app-docker.sh /opt/hmdm/
+RUN sed -i 's/\r$//' /docker-entrypoint.sh /opt/hmdm/update-web-app-docker.sh \
+    && chmod +x /docker-entrypoint.sh /opt/hmdm/update-web-app-docker.sh
+COPY hmdm-docker/tomcat_conf/server.xml /usr/local/tomcat/conf/server.xml
+ADD hmdm-docker/templates /opt/hmdm/templates/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -41,6 +41,7 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface ServerService {
 
@@ -116,5 +117,21 @@ public interface ServerService {
     @POST("{project}/rest/plugins/devicereset/public/password/{number}")
     @Headers("Content-Type: application/json")
     Call<ResponseBody> confirmPasswordReset(@Path("project") String project, @Path("number") String number, @Body DeviceInfo deviceInfo);
+
+    @POST("{project}/rest/public/remote-control/{number}/frame")
+    @Headers("Content-Type: application/json")
+    Call<ResponseBody> postRemoteControlFrame(@Path("project") String project,
+                                              @Path("number") String number,
+                                              @Body com.hmdm.launcher.remotecontrol.RemoteControlFrame frame);
+
+    @GET("{project}/rest/public/remote-control/{number}/command")
+    Call<ResponseBody> pollRemoteControlCommand(@Path("project") String project,
+                                                @Path("number") String number,
+                                                @Query("token") String token);
+
+    @POST("{project}/rest/public/remote-control/{number}/stop")
+    Call<ResponseBody> stopRemoteControl(@Path("project") String project,
+                                         @Path("number") String number,
+                                         @Query("token") String token);
 
 }

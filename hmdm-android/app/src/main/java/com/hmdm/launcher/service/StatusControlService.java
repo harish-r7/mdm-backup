@@ -42,8 +42,10 @@ public class StatusControlService extends Service {
     private final long ENABLE_CONTROL_DELAY = 60;
 
     private final long STATUS_CHECK_INTERVAL_MS = 10000;
-    private final long LAUNCHER_LOCK_CHECK_INTERVAL_MS = 2000;
-    private final long LOCATION_LOCK_CHECK_INTERVAL_MS = 2000;
+    private final long LAUNCHER_LOCK_CHECK_INTERVAL_MS = 30000;
+    private final long LOCATION_LOCK_CHECK_INTERVAL_MS = 30000;
+    private static final String CUSTOM_POLICY_PREFS = "custom_policy";
+    private static final String PREF_LOCATION_LOCK_APPLIED = "location_lock_applied";
 
     private static class PackageInfo {
         public String packageName;
@@ -251,6 +253,12 @@ public class StatusControlService extends Service {
             return;
         }
 
+        SharedPreferences customPolicyPrefs = getSharedPreferences(CUSTOM_POLICY_PREFS, MODE_PRIVATE);
+        if (customPolicyPrefs.getBoolean(PREF_LOCATION_LOCK_APPLIED, false)) {
+            Log.d("LOCK_TEST", "Location lock already applied. Skipping.");
+            return;
+        }
+
         DevicePolicyManager dpm =
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         if (dpm == null) {
@@ -267,6 +275,7 @@ public class StatusControlService extends Service {
                 dpm.setLocationEnabled(admin, true);
                 Log.d("LOCK_TEST", "Location enabled by Device Owner");
             }
+            customPolicyPrefs.edit().putBoolean(PREF_LOCATION_LOCK_APPLIED, true).apply();
         } catch (Exception e) {
             Log.e("LOCK_TEST", "Error while applying location lock", e);
         }
@@ -286,6 +295,10 @@ public class StatusControlService extends Service {
         ComponentName admin = new ComponentName(this, AdminReceiver.class);
         try {
             dpm.clearUserRestriction(admin, UserManager.DISALLOW_CONFIG_LOCATION);
+            getSharedPreferences(CUSTOM_POLICY_PREFS, MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(PREF_LOCATION_LOCK_APPLIED, false)
+                    .apply();
             Log.d("LOCK_TEST", "DISALLOW_CONFIG_LOCATION cleared");
         } catch (Exception e) {
             Log.e("LOCK_TEST", "Error while removing location lock", e);

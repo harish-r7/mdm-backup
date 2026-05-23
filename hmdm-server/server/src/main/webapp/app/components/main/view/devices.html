@@ -457,9 +457,23 @@
 
                 <button type='button'
                         class='btn btn-default'
+                        title="Remote Control"
+                        ng-click='openRemoteControl(device)'>
+                    <span class='glyphicon glyphicon-facetime-video'></span> Remote Control
+                </button>
+
+                <button type='button'
+                        class='btn btn-default'
                         title="Force Sync"
                         ng-click='forceSyncDevice(device)'>
                     <span class='glyphicon glyphicon-refresh'></span> Force Sync
+                </button>
+
+                <button type='button'
+                        class='btn btn-danger'
+                        title="Wipe Device"
+                        ng-click='wipeDevice(device)'>
+                    <span class='glyphicon glyphicon-erase'></span> Wipe Device
                 </button>
 
                 <span class="btn-group dropdown" uib-dropdown ng-if="plugins && plugins.length > 0 || hasPermission('edit_device_app_settings')">
@@ -487,6 +501,37 @@
     <div ng-if='!devices' class='center' localized>success.loading.devices</div>
 
     <div ng-if='devices && devices.length === 0' class='center' localized>notfound.devices</div>
+
+    <div ng-if="remoteControl.visible"
+         style="position: fixed; z-index: 2000; top: 55px; left: 50%; transform: translateX(-50%); width: 900px; max-width: 95vw; background: #fff; border: 1px solid #bbb; box-shadow: 0 6px 22px rgba(0,0,0,.25); padding: 12px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <strong>Remote Control - {{remoteControl.device.number}}</strong>
+            <div>
+                <button type="button" class="btn btn-default btn-sm" ng-click="remoteBack()">
+                    <span class="glyphicon glyphicon-arrow-left"></span> Back
+                </button>
+                <button type="button" class="btn btn-default btn-sm" ng-click="remoteHome()">
+                    <span class="glyphicon glyphicon-home"></span> Home
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" ng-click="closeRemoteControl()">
+                    <span class="glyphicon glyphicon-remove"></span> Close
+                </button>
+            </div>
+        </div>
+        <div ng-if="remoteControl.message" class="alert alert-info" style="margin-bottom: 10px;">
+            {{remoteControl.message}}
+        </div>
+        <div style="background: #111; text-align: center; min-height: 420px; display: flex; align-items: center; justify-content: center;">
+            <img ng-if="remoteControl.frame"
+                 ng-src="{{remoteControl.frame}}"
+                 ng-mousedown="remotePointerStart($event)"
+                 ng-mousemove="remotePointerMove($event)"
+                 ng-mouseup="remotePointerEnd($event)"
+                 ng-mouseleave="remotePointerEnd($event)"
+                 remote-wheel
+                 style="max-width: 100%; max-height: 72vh; cursor: crosshair; object-fit: contain;" />
+        </div>
+    </div>
 
     <div class="custom-pagination-wrapper">
         <div class="custom-pagination" ng-if="paging.totalItems > 0">

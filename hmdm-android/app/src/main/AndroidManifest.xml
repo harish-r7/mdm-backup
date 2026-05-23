@@ -57,6 +57,7 @@
     <uses-permission android:name="com.mediatek.permission.CTA_ENABLE_BT"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission"/>
@@ -184,6 +185,11 @@
             android:theme="@style/SetupWizardTheme" 
             android:exported="false"/>
 
+        <activity
+            android:name=".remotecontrol.RemoteControlPermissionActivity"
+            android:excludeFromRecents="true"
+            android:exported="false" />
+
         <receiver
             android:name="com.hmdm.launcher.AdminReceiver"
             android:label="@string/white_app_name"
@@ -250,6 +256,23 @@
         <!-- Stub -->
         <service android:name=".pro.service.CheckForegroundAppAccessibilityService"
                  android:exported="false"/>
+
+        <service
+            android:name=".remotecontrol.RemoteControlAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/remote_control_accessibility" />
+        </service>
+
+        <service
+            android:name=".remotecontrol.RemoteControlService"
+            android:foregroundServiceType="mediaProjection"
+            android:exported="false" />
 
         <service android:name="org.eclipse.paho.android.service.MqttService"
             android:foregroundServiceType="specialUse|systemExempted"

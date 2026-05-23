@@ -110,6 +110,7 @@ public class ConfigUpdater {
             Log.d(Const.LOG_TAG, "Main activity is running, broadcasting update configuration");
             LocalBroadcastManager.getInstance(context).
                     sendBroadcast(new Intent(Const.ACTION_UPDATE_CONFIGURATION));
+            return;
         } else {
             Log.d(Const.LOG_TAG, "Main activity is not running, creating a new ConfigUpdater");
         }

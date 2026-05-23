@@ -382,13 +382,26 @@ public class Utils {
     public static boolean factoryReset(Context context) {
         try {
             DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+            if (dpm == null) {
+                RemoteLogger.log(context, Const.LOG_WARN, "Factory reset failed: device policy manager is unavailable");
+                return false;
+            }
+            ComponentName adminComponentName = LegacyUtils.getAdminComponentName(context);
+            boolean adminActive = dpm.isAdminActive(adminComponentName);
+            boolean deviceOwner = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                    dpm.isDeviceOwnerApp(context.getPackageName());
+            RemoteLogger.log(context, Const.LOG_WARN,
+                    "Factory reset requested. adminActive=" + adminActive + ", deviceOwner=" + deviceOwner);
+            int flags = DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                dpm.wipeData(0);
+                dpm.wipeData(flags);
             } else {
-                dpm.wipeDevice(0);
+                dpm.wipeDevice(flags);
             }
             return true;
         } catch (Exception e) {
+            RemoteLogger.log(context, Const.LOG_ERROR, "Factory reset failed: " + e.getClass().getSimpleName() +
+                    ": " + e.getMessage());
             return false;
         }
     }

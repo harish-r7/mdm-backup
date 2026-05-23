@@ -41,6 +41,8 @@ import com.hmdm.launcher.json.Application;
 import com.hmdm.launcher.json.Download;
 import com.hmdm.launcher.json.PushMessage;
 import com.hmdm.launcher.json.ServerConfig;
+import com.hmdm.launcher.remotecontrol.RemoteControlPermissionActivity;
+import com.hmdm.launcher.remotecontrol.RemoteControlService;
 import com.hmdm.launcher.util.InstallUtils;
 import com.hmdm.launcher.util.LegacyUtils;
 import com.hmdm.launcher.util.RemoteLogger;
@@ -110,6 +112,16 @@ public class PushNotificationProcessor {
         } else if (message.getMessageType().equals(PushMessage.TYPE_REBOOT)) {
             // Reboot a device
             executor.execute(() -> reboot(context));
+            return;
+        } else if (message.getMessageType().equals(PushMessage.TYPE_WIPE_DEVICE)) {
+            // Factory reset a device
+            executor.execute(() -> wipeDevice(context));
+            return;
+        } else if (message.getMessageType().equals(PushMessage.TYPE_REMOTE_CONTROL_START)) {
+            startRemoteControl(context, message.getPayloadJSON());
+            return;
+        } else if (message.getMessageType().equals(PushMessage.TYPE_REMOTE_CONTROL_STOP)) {
+            context.stopService(new Intent(context, RemoteControlService.class));
             return;
         } else if (message.getMessageType().equals(PushMessage.TYPE_EXIT_KIOSK)) {
             // Temporarily exit kiosk mode
@@ -374,6 +386,33 @@ public class PushNotificationProcessor {
         } else {
             RemoteLogger.log(context, Const.LOG_WARN, "Reboot failed: no permissions");
         }
+    }
+
+    private static void wipeDevice(Context context) {
+        RemoteLogger.log(context, Const.LOG_WARN, "Factory reset by a Push message");
+        if (Utils.checkAdminMode(context)) {
+            if (!Utils.factoryReset(context)) {
+                RemoteLogger.log(context, Const.LOG_WARN, "Factory reset failed");
+            }
+        } else {
+            RemoteLogger.log(context, Const.LOG_WARN, "Factory reset failed: no permissions");
+        }
+    }
+
+    private static void startRemoteControl(Context context, JSONObject payload) {
+        if (payload == null) {
+            RemoteLogger.log(context, Const.LOG_WARN, "Remote control start failed: no payload");
+            return;
+        }
+        String token = payload.optString("token", null);
+        if (token == null || token.length() == 0) {
+            RemoteLogger.log(context, Const.LOG_WARN, "Remote control start failed: no token");
+            return;
+        }
+        Intent intent = new Intent(context, RemoteControlPermissionActivity.class);
+        intent.putExtra(RemoteControlService.EXTRA_TOKEN, token);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
     }
 
     private static void clearDownloads(Context context) {
