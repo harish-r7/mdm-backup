@@ -246,15 +246,20 @@ public class RemoteControlService extends Service {
 
     private void handleCommand(JSONObject command) {
         String type = command.optString("type", "");
-        float x = command.optLong("x", 0);
-        float y = command.optLong("y", 0);
-        float x2 = command.optLong("x2", 0);
-        float y2 = command.optLong("y2", 0);
+        float x = (float) command.optDouble("x", 0);
+        float y = (float) command.optDouble("y", 0);
+        float x2 = (float) command.optDouble("x2", 0);
+        float y2 = (float) command.optDouble("y2", 0);
         long duration = command.optLong("duration", 150);
+        int direction = command.optInt("direction", command.optInt("text", 0));
         if ("tap".equals(type)) {
             RemoteControlAccessibilityService.tap(x, y);
         } else if ("swipe".equals(type)) {
             RemoteControlAccessibilityService.swipe(x, y, x2, y2, duration);
+        } else if ("scroll".equals(type)) {
+            if (!RemoteControlAccessibilityService.scroll(x, y, direction)) {
+                RemoteControlAccessibilityService.swipe(x, y, x2, y2, duration);
+            }
         } else if ("back".equals(type)) {
             RemoteControlAccessibilityService.back();
         } else if ("home".equals(type)) {

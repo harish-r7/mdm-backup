@@ -551,11 +551,23 @@ angular.module('headwind-kiosk')
             $http.post('rest/private/remote-control/' + remoteNumber($scope.remoteControl.device) + '/command', command);
         }
 
+        function remoteImageElement($event) {
+            var target = $event.currentTarget;
+            if (target && target.tagName && target.tagName.toLowerCase() === 'img') {
+                return target;
+            }
+            return target ? target.querySelector('img') : null;
+        }
+
         function remotePoint($event) {
             if (!$scope.remoteControl.width || !$scope.remoteControl.height) {
                 return null;
             }
-            var rect = $event.currentTarget.getBoundingClientRect();
+            var image = remoteImageElement($event);
+            if (!image) {
+                return null;
+            }
+            var rect = image.getBoundingClientRect();
             var x = ($event.clientX - rect.left) * $scope.remoteControl.width / rect.width;
             var y = ($event.clientY - rect.top) * $scope.remoteControl.height / rect.height;
             x = Math.max(0, Math.min($scope.remoteControl.width, x));
@@ -620,22 +632,31 @@ angular.module('headwind-kiosk')
         };
 
         $scope.remoteWheel = function($event) {
+            var point = remotePoint($event);
+            if (!point) {
+                return;
+            }
+            $scope.remoteScroll($event.deltaY > 0 ? 1 : -1, point.x, point.y);
+        };
+
+        $scope.remoteScroll = function(direction, x, y) {
             if (!$scope.remoteControl.width || !$scope.remoteControl.height) {
                 return;
             }
-            var rect = $event.currentTarget.getBoundingClientRect();
-            var x = ($event.clientX - rect.left) * $scope.remoteControl.width / rect.width;
-            x = Math.max(0, Math.min($scope.remoteControl.width, x));
-            var centerY = $scope.remoteControl.height / 2;
-            var distance = Math.min($scope.remoteControl.height * 0.45, Math.max(120, Math.abs($event.deltaY) * 2));
-            var direction = $event.deltaY > 0 ? 1 : -1;
+            x = x || $scope.remoteControl.width / 2;
+            y = y || $scope.remoteControl.height / 2;
+            var distance = Math.min($scope.remoteControl.height * 0.45, Math.max(180, $scope.remoteControl.height * 0.25));
+            var fromY = Math.max(1, Math.min($scope.remoteControl.height - 1, y + direction * distance / 2));
+            var toY = Math.max(1, Math.min($scope.remoteControl.height - 1, y - direction * distance / 2));
             sendRemoteCommand({
-                type: 'swipe',
+                type: 'scroll',
+                direction: direction,
+                text: '' + direction,
                 x: x,
-                y: centerY + direction * distance / 2,
+                y: fromY,
                 x2: x,
-                y2: centerY - direction * distance / 2,
-                duration: 220
+                y2: toY,
+                duration: 350
             });
         };
 

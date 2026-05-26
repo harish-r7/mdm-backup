@@ -55,6 +55,7 @@ public class RemoteControlSessionStore {
         public float x2;
         public float y2;
         public long duration;
+        public int direction;
         public String text;
     }
 

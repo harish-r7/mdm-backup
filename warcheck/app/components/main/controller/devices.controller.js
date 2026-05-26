@@ -1,5 +1,22 @@
 // Localization completed
 angular.module('headwind-kiosk')
+    .directive('remoteWheel', function() {
+        return {
+            restrict: 'A',
+            link: function(scope, element) {
+                var handler = function(event) {
+                    event.preventDefault();
+                    scope.$apply(function() {
+                        scope.remoteWheel(event);
+                    });
+                };
+                element[0].addEventListener('wheel', handler, {passive: false});
+                scope.$on('$destroy', function() {
+                    element[0].removeEventListener('wheel', handler);
+                });
+            }
+        };
+    })
     .controller('DevicesTabController', function ($scope, $rootScope, $state, $modal, $interval, $cookies, $window, $filter, $timeout,$http,confirmModal, deviceService, groupService, settingsService, hintService,
                                                   authService, pluginService, configurationService, alertService,
                                                   spinnerService, localization, utils) {
@@ -429,10 +446,213 @@ angular.module('headwind-kiosk')
         });
 };
 
+        $scope.remoteControl = {
+            visible: false,
+            loading: false,
+            device: null,
+            frame: null,
+            width: 0,
+            height: 0,
+            message: null,
+            drag: null
+        };
+        var remoteControlTimer = null;
+
+        function remoteNumber(device) {
+            return device.number.replace(/\//g, "~2F");
+        }
+
+        function stopRemotePolling() {
+            if (remoteControlTimer) {
+                $interval.cancel(remoteControlTimer);
+                remoteControlTimer = null;
+            }
+        }
+
+        function pollRemoteFrame() {
+            if (!$scope.remoteControl.visible || !$scope.remoteControl.device) {
+                return;
+            }
+            $http.get('rest/private/remote-control/' + remoteNumber($scope.remoteControl.device) + '/frame')
+                .then(function(response) {
+                    var data = response.data ? response.data.data : null;
+                    if (data && data.frame) {
+                        $scope.remoteControl.frame = 'data:image/jpeg;base64,' + data.frame;
+                        $scope.remoteControl.width = data.width;
+                        $scope.remoteControl.height = data.height;
+                        $scope.remoteControl.message = null;
+                    } else {
+                        $scope.remoteControl.message = 'Waiting for tablet screen permission and first frame...';
+                    }
+                });
+        }
+
+        $scope.openRemoteControl = function(device) {
+            if (!device || !device.number) {
+                alert('Device number not found');
+                return;
+            }
+            stopRemotePolling();
+            $scope.remoteControl.visible = true;
+            $scope.remoteControl.loading = true;
+            $scope.remoteControl.device = device;
+            $scope.remoteControl.frame = null;
+            $scope.remoteControl.message = 'Starting remote control session...';
+
+            $http.post('rest/private/remote-control/' + remoteNumber(device) + '/start')
+                .then(function(response) {
+                    $scope.remoteControl.loading = false;
+                    if (response.data && response.data.status === 'OK') {
+                        pollRemoteFrame();
+                        remoteControlTimer = $interval(pollRemoteFrame, 1000);
+                    } else {
+                        $scope.remoteControl.message = 'Failed to start remote control session';
+                    }
+                }, function() {
+                    $scope.remoteControl.loading = false;
+                    $scope.remoteControl.message = 'Failed to start remote control session';
+                });
+        };
+
+        function sendRemoteCommand(command) {
+            if (!$scope.remoteControl.device) {
+                return;
+            }
+            $http.post('rest/private/remote-control/' + remoteNumber($scope.remoteControl.device) + '/command', command);
+        }
+
+        function remoteImageElement($event) {
+            var target = $event.currentTarget;
+            if (target && target.tagName && target.tagName.toLowerCase() === 'img') {
+                return target;
+            }
+            return target ? target.querySelector('img') : null;
+        }
+
+        function remotePoint($event) {
+            if (!$scope.remoteControl.width || !$scope.remoteControl.height) {
+                return null;
+            }
+            var image = remoteImageElement($event);
+            if (!image) {
+                return null;
+            }
+            var rect = image.getBoundingClientRect();
+            var x = ($event.clientX - rect.left) * $scope.remoteControl.width / rect.width;
+            var y = ($event.clientY - rect.top) * $scope.remoteControl.height / rect.height;
+            x = Math.max(0, Math.min($scope.remoteControl.width, x));
+            y = Math.max(0, Math.min($scope.remoteControl.height, y));
+            return {x: x, y: y};
+        }
+
+        $scope.remotePointerStart = function($event) {
+            var point = remotePoint($event);
+            if (!point) {
+                return;
+            }
+            $event.preventDefault();
+            $scope.remoteControl.drag = {
+                x: point.x,
+                y: point.y,
+                lastX: point.x,
+                lastY: point.y,
+                moved: false
+            };
+        };
+
+        $scope.remotePointerMove = function($event) {
+            var drag = $scope.remoteControl.drag;
+            if (!drag) {
+                return;
+            }
+            var point = remotePoint($event);
+            if (!point) {
+                return;
+            }
+            var dx = point.x - drag.x;
+            var dy = point.y - drag.y;
+            drag.lastX = point.x;
+            drag.lastY = point.y;
+            if (Math.sqrt(dx * dx + dy * dy) > 8) {
+                drag.moved = true;
+            }
+            $event.preventDefault();
+        };
+
+        $scope.remotePointerEnd = function($event) {
+            var drag = $scope.remoteControl.drag;
+            if (!drag) {
+                return;
+            }
+            var point = remotePoint($event) || {x: drag.lastX, y: drag.lastY};
+            $scope.remoteControl.drag = null;
+            $event.preventDefault();
+            if (drag.moved) {
+                sendRemoteCommand({
+                    type: 'swipe',
+                    x: drag.x,
+                    y: drag.y,
+                    x2: point.x,
+                    y2: point.y,
+                    duration: 250
+                });
+                return;
+            }
+            sendRemoteCommand({type: 'tap', x: point.x, y: point.y});
+        };
+
+        $scope.remoteWheel = function($event) {
+            var point = remotePoint($event);
+            if (!point) {
+                return;
+            }
+            $scope.remoteScroll($event.deltaY > 0 ? 1 : -1, point.x, point.y);
+        };
+
+        $scope.remoteScroll = function(direction, x, y) {
+            if (!$scope.remoteControl.width || !$scope.remoteControl.height) {
+                return;
+            }
+            x = x || $scope.remoteControl.width / 2;
+            y = y || $scope.remoteControl.height / 2;
+            var distance = Math.min($scope.remoteControl.height * 0.45, Math.max(180, $scope.remoteControl.height * 0.25));
+            var fromY = Math.max(1, Math.min($scope.remoteControl.height - 1, y + direction * distance / 2));
+            var toY = Math.max(1, Math.min($scope.remoteControl.height - 1, y - direction * distance / 2));
+            sendRemoteCommand({
+                type: 'scroll',
+                direction: direction,
+                text: '' + direction,
+                x: x,
+                y: fromY,
+                x2: x,
+                y2: toY,
+                duration: 350
+            });
+        };
+
+        $scope.remoteBack = function() {
+            sendRemoteCommand({type: 'back'});
+        };
+
+        $scope.remoteHome = function() {
+            sendRemoteCommand({type: 'home'});
+        };
+
+        $scope.closeRemoteControl = function() {
+            if ($scope.remoteControl.device) {
+                $http.post('rest/private/remote-control/' + remoteNumber($scope.remoteControl.device) + '/stop');
+            }
+            stopRemotePolling();
+            $scope.remoteControl.visible = false;
+            $scope.remoteControl.device = null;
+            $scope.remoteControl.frame = null;
+        };
+
         $scope.interval = $interval(function () {
             $scope.search(true);
         }, 60 * 1000);
         $scope.$on('$destroy', function () {
+            stopRemotePolling();
             if ($scope.interval) $interval.cancel($scope.interval);
         });
 
