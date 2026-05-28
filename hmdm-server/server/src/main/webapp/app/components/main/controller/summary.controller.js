@@ -10,7 +10,7 @@ angular.module('headwind-kiosk')
         ];
         $scope.enrollmentColors = [
             '#DCDCDC',
-            '#97BBCD'
+            '#d98b8b'
         ];
 
         $scope.statusLabels = [
@@ -33,7 +33,7 @@ angular.module('headwind-kiosk')
 
         $scope.monthlyEnrollColors = [];
         for (var i = 0; i < 12; i++) {
-            $scope.monthlyEnrollColors.push('#97BBCD');
+            $scope.monthlyEnrollColors.push('#d98b8b');
         }
 
         $scope.statusByConfigSeries = [

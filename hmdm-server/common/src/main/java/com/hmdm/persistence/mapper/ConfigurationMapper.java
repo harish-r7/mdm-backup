@@ -81,6 +81,10 @@ public interface ConfigurationMapper {
             "requestUpdates=#{requestUpdates}, " +
             "disableLocation=#{disableLocation}, " +
             "appPermissions=#{appPermissions}, " +
+            "locationSettingsEnabled=#{locationSettingsEnabled}, " +
+            "locationLatitude=#{locationLatitude}, " +
+            "locationLongitude=#{locationLongitude}, " +
+            "locationRadius=#{locationRadius}, " +
             "pushOptions=#{pushOptions}, " +
             "keepaliveTime=#{keepaliveTime}, " +
             "autoBrightness=#{autoBrightness}, " +

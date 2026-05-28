@@ -66,6 +66,14 @@ public class Device implements CustomerData, Serializable {
     private String custom2;
     @ApiModelProperty("Custom property #3")
     private String custom3;
+    @ApiModelProperty("A flag enabling device-specific location range enforcement")
+    private Boolean locationSettingsEnabled;
+    @ApiModelProperty("Device-specific allowed location latitude")
+    private Double locationLatitude;
+    @ApiModelProperty("Device-specific allowed location longitude")
+    private Double locationLongitude;
+    @ApiModelProperty("Device-specific allowed distance from configured location, in meters")
+    private Integer locationRadius;
 
     // Many-to-many relations
     @ApiModelProperty("A list of groups assigned to device")
@@ -273,6 +281,38 @@ public class Device implements CustomerData, Serializable {
         this.custom3 = custom3;
     }
 
+    public Boolean getLocationSettingsEnabled() {
+        return locationSettingsEnabled;
+    }
+
+    public void setLocationSettingsEnabled(Boolean locationSettingsEnabled) {
+        this.locationSettingsEnabled = locationSettingsEnabled;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
+
+    public Integer getLocationRadius() {
+        return locationRadius;
+    }
+
+    public void setLocationRadius(Integer locationRadius) {
+        this.locationRadius = locationRadius;
+    }
+
     public List<LookupItem> getGroups() {
         return groups;
     }
@@ -391,6 +431,10 @@ public class Device implements CustomerData, Serializable {
                 ", custom1=" + custom1 +
                 ", custom2=" + custom2 +
                 ", custom3=" + custom3 +
+                ", locationSettingsEnabled=" + locationSettingsEnabled +
+                ", locationLatitude=" + locationLatitude +
+                ", locationLongitude=" + locationLongitude +
+                ", locationRadius=" + locationRadius +
                 ", groups=" + groups +
                 ", ids=" + ids +
                 ", configuration=" + configuration +

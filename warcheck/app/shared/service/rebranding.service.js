@@ -2,16 +2,18 @@
 angular.module('headwind-kiosk')
     .factory('rebranding', function ($cookies, localization, serverRebrandingService) {
 
+        var defaultAppName = 'Sugunafoods MDM';
+
         var defaultValue = {
-            appName: localization.localize('app.name'),
+            appName: defaultAppName,
             vendorName: localization.localize('app.vendor.name'),
             vendorLink: localization.localize('app.vendor.link')
         };
 
         var fixEmptyValue = function(value) {
-            if (value.appName === "") {
+            if (value.appName === "" || value.appName === "Headwind MDM") {
                 // Empty strings are replaced by default values
-                value.appName = localization.localize('app.name');
+                value.appName = defaultAppName;
             }
             if (value.vendorName === "") {
                 value.vendorName = localization.localize('app.vendor.name');

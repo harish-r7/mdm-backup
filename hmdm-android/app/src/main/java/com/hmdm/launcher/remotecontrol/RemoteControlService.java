@@ -45,12 +45,15 @@ public class RemoteControlService extends Service {
 
     private static final String CHANNEL_ID = "remote_control";
     private static final int NOTIFICATION_ID = 7721;
-    private static final int FRAME_INTERVAL_MS = 900;
-    private static final int COMMAND_INTERVAL_MS = 450;
-    private static final int MAX_FRAME_WIDTH = 720;
+    private static final int FRAME_INTERVAL_MS = 500;
+    private static final int COMMAND_INTERVAL_MS = 180;
+    private static final int MAX_FRAME_WIDTH = 540;
+    private static final int JPEG_QUALITY = 42;
 
     private HandlerThread workerThread;
     private Handler workerHandler;
+    private HandlerThread commandThread;
+    private Handler commandHandler;
     private MediaProjection projection;
     private VirtualDisplay virtualDisplay;
     private ImageReader imageReader;
@@ -75,8 +78,8 @@ public class RemoteControlService extends Service {
         @Override
         public void run() {
             pollCommand();
-            if (workerHandler != null) {
-                workerHandler.postDelayed(this, COMMAND_INTERVAL_MS);
+            if (commandHandler != null) {
+                commandHandler.postDelayed(this, COMMAND_INTERVAL_MS);
             }
         }
     };
@@ -128,8 +131,11 @@ public class RemoteControlService extends Service {
         workerThread = new HandlerThread("RemoteControl");
         workerThread.start();
         workerHandler = new Handler(workerThread.getLooper());
+        commandThread = new HandlerThread("RemoteControlCommands");
+        commandThread.start();
+        commandHandler = new Handler(commandThread.getLooper());
         workerHandler.post(frameLoop);
-        workerHandler.post(commandLoop);
+        commandHandler.post(commandLoop);
     }
 
     private void startCapture() {
@@ -156,6 +162,9 @@ public class RemoteControlService extends Service {
         if (workerHandler != null) {
             workerHandler.removeCallbacksAndMessages(null);
         }
+        if (commandHandler != null) {
+            commandHandler.removeCallbacksAndMessages(null);
+        }
         if (virtualDisplay != null) {
             virtualDisplay.release();
             virtualDisplay = null;
@@ -172,6 +181,11 @@ public class RemoteControlService extends Service {
             workerThread.quitSafely();
             workerThread = null;
             workerHandler = null;
+        }
+        if (commandThread != null) {
+            commandThread.quitSafely();
+            commandThread = null;
+            commandHandler = null;
         }
     }
 
@@ -210,7 +224,7 @@ public class RemoteControlService extends Service {
             }
 
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            output.compress(Bitmap.CompressFormat.JPEG, 55, stream);
+            output.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, stream);
             output.recycle();
             String frame = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP);
             ServerService service = ServerServiceKeeper.getServerServiceInstance(this);

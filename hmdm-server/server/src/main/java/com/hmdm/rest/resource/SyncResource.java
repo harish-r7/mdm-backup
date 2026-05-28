@@ -360,6 +360,16 @@ public class SyncResource {
         data.setRequestUpdates(configuration.getRequestUpdates().getTransmittedValue());
         data.setDisableLocation(configuration.getDisableLocation());
         data.setAppPermissions(configuration.getAppPermissions().getTransmittedValue());
+        data.setLocationSettingsEnabled(configuration.getLocationSettingsEnabled());
+        data.setLocationLatitude(configuration.getLocationLatitude());
+        data.setLocationLongitude(configuration.getLocationLongitude());
+        data.setLocationRadius(configuration.getLocationRadius());
+        if (Boolean.TRUE.equals(dbDevice.getLocationSettingsEnabled())) {
+            data.setLocationSettingsEnabled(true);
+            data.setLocationLatitude(dbDevice.getLocationLatitude());
+            data.setLocationLongitude(dbDevice.getLocationLongitude());
+            data.setLocationRadius(dbDevice.getLocationRadius());
+        }
         data.setPushOptions(configuration.getPushOptions());
         data.setKeepaliveTime(configuration.getKeepaliveTime());
         data.setAutoBrightness(configuration.getAutoBrightness());

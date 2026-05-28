@@ -421,6 +421,76 @@
                     </div>
                 </tab>
 
+                <!-- LOCATION SETTINGS -->
+                <tab>
+                    <tab-heading localized>tab.configeditor.location.settings</tab-heading>
+
+                    <div class='form-group'>
+                        <label class='col-sm-3 control-label' localized>form.configuration.settings.location.enabled</label>
+                        <div class='col-sm-1'>
+                            <input ng-model='configuration.locationSettingsEnabled'
+                                   name="locationSettingsEnabled"
+                                   type='checkbox'
+                                   class='form-control common-checkbox'/>
+                        </div>
+                    </div>
+
+                    <div class='form-group' ng-if="configuration.locationSettingsEnabled">
+                        <label class='col-sm-3 control-label' localized>form.configuration.settings.location.latitude</label>
+                        <div class='col-sm-9'>
+                            <input ng-model='configuration.locationLatitude'
+                                   name="locationLatitude"
+                                   type='number'
+                                   min="-90"
+                                   max="90"
+                                   step="0.000001"
+                                   class='form-control'
+                                   localized-placeholder='form.configuration.settings.location.latitude.placeholder'/>
+                        </div>
+                    </div>
+
+                    <div class='form-group' ng-if="configuration.locationSettingsEnabled">
+                        <label class='col-sm-3 control-label' localized>form.configuration.settings.location.longitude</label>
+                        <div class='col-sm-9'>
+                            <input ng-model='configuration.locationLongitude'
+                                   name="locationLongitude"
+                                   type='number'
+                                   min="-180"
+                                   max="180"
+                                   step="0.000001"
+                                   class='form-control'
+                                   localized-placeholder='form.configuration.settings.location.longitude.placeholder'/>
+                        </div>
+                    </div>
+
+                    <div class='form-group' ng-if="configuration.locationSettingsEnabled">
+                        <label class='col-sm-3 control-label' localized>form.configuration.settings.location.radius</label>
+                        <div class='col-sm-9'>
+                            <input ng-model='configuration.locationRadius'
+                                   name="locationRadius"
+                                   type='number'
+                                   min="1"
+                                   step="1"
+                                   class='form-control'
+                                   localized-placeholder='form.configuration.settings.location.radius.placeholder'/>
+                        </div>
+                    </div>
+
+                    <div class='form-group' ng-if="configuration.locationSettingsEnabled">
+                        <div class='col-sm-3'>&nbsp;</div>
+                        <div class='col-sm-9 field-hint' localized>form.configuration.settings.location.hint</div>
+                    </div>
+
+                    <div class="config-bottom">&nbsp;</div>
+                    <div class='form-group'>
+                        <div class='config-save'>
+                            <button type='submit' class='btn btn-default {{saveButtonClass()}}' ng-click='save(false)' localized>button.save</button>
+                            <button type='submit' class='btn btn-default' ng-click='save(true)' localized>button.save.and.close</button>
+                            <button type='button' class='btn btn-default' ng-click='close()' localized>button.cancel</button>
+                        </div>
+                    </div>
+                </tab>
+
                 <!-- DESIGN SETTINGS -->
                 <tab>
 

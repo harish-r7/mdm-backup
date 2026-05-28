@@ -465,8 +465,9 @@
                 <button type='button'
                         class='btn btn-default'
                         title="Force Sync"
+                        ng-disabled='device.forceSyncLoading'
                         ng-click='forceSyncDevice(device)'>
-                    <span class='glyphicon glyphicon-refresh'></span> Force Sync
+                    <span class='glyphicon glyphicon-refresh'></span> {{device.forceSyncLoading ? 'Sending...' : 'Force Sync'}}
                 </button>
 
                 <button type='button'

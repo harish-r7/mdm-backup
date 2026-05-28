@@ -466,8 +466,9 @@
         class='btn btn-default'
         title="Force Sync"
         ng-if="hasPermission('edit_devices')"
+        ng-disabled='device.forceSyncLoading'
         ng-click='forceSyncDevice(device)'>
-    <span class='glyphicon glyphicon-refresh'></span>Force Sync
+    <span class='glyphicon glyphicon-refresh'></span>{{device.forceSyncLoading ? 'Sending...' : 'Force Sync'}}
 </button>
 
     <span class="btn-group dropdown" uib-dropdown ng-if="plugins && plugins.length > 0 || hasPermission('edit_device_app_settings')">

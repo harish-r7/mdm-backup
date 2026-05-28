@@ -28,6 +28,7 @@ import com.hmdm.launcher.json.Application;
 import com.hmdm.launcher.json.ApplicationSetting;
 import com.hmdm.launcher.json.RemoteFile;
 import com.hmdm.launcher.json.ServerConfig;
+import com.hmdm.launcher.pro.ProUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -67,6 +68,7 @@ public class SettingsHelper {
     // This prefix is for the compatibility with a legacy package name
     private static String PACKAGE_NAME;
 
+    private Context context;
     private SharedPreferences sharedPreferences;
     private ServerConfig config;
     private ServerConfig oldConfig;
@@ -84,6 +86,7 @@ public class SettingsHelper {
     }
 
     public SettingsHelper(Context context) {
+        this.context = context.getApplicationContext();
         PACKAGE_NAME = context.getPackageName();
         sharedPreferences = context.getSharedPreferences(PACKAGE_NAME + PREFERENCES_ID, Context.MODE_PRIVATE );
         initConfig();
@@ -341,6 +344,7 @@ public class SettingsHelper {
         updateAllowedClassesSet(config);
         this.oldConfig = this.config;
         this.config = config;
+        ProUtils.processConfig(context, config);
     }
 
     public ServerConfig getConfig() {

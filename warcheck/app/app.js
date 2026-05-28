@@ -521,7 +521,7 @@ angular.module('headwind-kiosk',
             }
         });
 
-        $window.document.title = localization.localize('app.title').replace('${appName}', "MDM");
+        $window.document.title = localization.localize('app.title').replace('${appName}', "Sugunafoods MDM");
         rebranding.query(function(value) {
             $window.document.title = localization.localize('app.title').replace('${appName}', value.appName);
         });
@@ -531,7 +531,7 @@ angular.module('headwind-kiosk',
         });
 
         $rootScope.$on('aero_LOCALE_CHANGED', function () {
-            $window.document.title = localization.localize('app.title').replace('${appName}', "MDM");
+            $window.document.title = localization.localize('app.title').replace('${appName}', "Sugunafoods MDM");
             rebranding.query(function(value) {
                 $window.document.title = localization.localize('app.title').replace('${appName}', value.appName);
             });

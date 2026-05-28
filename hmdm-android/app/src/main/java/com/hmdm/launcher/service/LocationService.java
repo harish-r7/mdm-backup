@@ -47,6 +47,7 @@ import com.hmdm.launcher.Const;
 import com.hmdm.launcher.R;
 import com.hmdm.launcher.helper.SettingsHelper;
 import com.hmdm.launcher.pro.ProUtils;
+import com.hmdm.launcher.util.GeofencePolicy;
 import com.hmdm.launcher.util.RemoteLogger;
 
 public class LocationService extends Service {
@@ -187,6 +188,7 @@ public class LocationService extends Service {
                     locationManager.registerGnssStatusCallback(gnssStatusCallback, handler);
                 }
             }
+            processLastKnownLocation();
         } catch (Exception e) {
             // Provider may not exist, so process it friendly
             e.printStackTrace();
@@ -194,6 +196,36 @@ public class LocationService extends Service {
         }
 
         return true;
+    }
+
+    private void processLastKnownLocation() {
+        if (!GeofencePolicy.isConfigured(SettingsHelper.getInstance(this).getConfig())) {
+            return;
+        }
+        Location gpsLocation = null;
+        Location networkLocation = null;
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            }
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            }
+        } catch (Exception e) {
+            RemoteLogger.log(this, Const.LOG_WARN, "Failed to read last known location for range check");
+        }
+
+        Location location = null;
+        if (gpsLocation != null && networkLocation != null) {
+            location = gpsLocation.getTime() >= networkLocation.getTime() ? gpsLocation : networkLocation;
+        } else if (gpsLocation != null) {
+            location = gpsLocation;
+        } else if (networkLocation != null) {
+            location = networkLocation;
+        }
+        if (location != null) {
+            GeofencePolicy.evaluate(this, location);
+        }
     }
 
 

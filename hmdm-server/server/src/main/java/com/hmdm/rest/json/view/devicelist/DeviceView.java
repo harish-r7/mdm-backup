@@ -120,6 +120,26 @@ public class DeviceView {
         return device.getPhone();
     }
 
+    @ApiModelProperty("A flag indicating whether the device has an individual allowed location range")
+    public Boolean getLocationSettingsEnabled() {
+        return device.getLocationSettingsEnabled();
+    }
+
+    @ApiModelProperty("Allowed location latitude for this device")
+    public Double getLocationLatitude() {
+        return device.getLocationLatitude();
+    }
+
+    @ApiModelProperty("Allowed location longitude for this device")
+    public Double getLocationLongitude() {
+        return device.getLocationLongitude();
+    }
+
+    @ApiModelProperty("Allowed location radius for this device, in meters")
+    public Integer getLocationRadius() {
+        return device.getLocationRadius();
+    }
+
     @ApiModelProperty("A public IP of device")
     public String getPublicIp() {
         return device.getPublicIp();

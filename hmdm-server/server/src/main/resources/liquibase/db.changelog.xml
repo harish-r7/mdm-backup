@@ -2624,4 +2624,50 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="27.05.26-11:20-location-settings" author="custom" context="common">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="configurations" columnName="locationsettingsenabled"/>
+            </not>
+        </preConditions>
+        <comment>Columns,new: configuration location range settings</comment>
+        <sql>
+            ALTER TABLE configurations
+                ADD COLUMN locationSettingsEnabled BOOLEAN NOT NULL DEFAULT false,
+                ADD COLUMN locationLatitude DOUBLE PRECISION,
+                ADD COLUMN locationLongitude DOUBLE PRECISION,
+                ADD COLUMN locationRadius INT;
+        </sql>
+        <rollback>
+            ALTER TABLE configurations
+                DROP COLUMN locationSettingsEnabled,
+                DROP COLUMN locationLatitude,
+                DROP COLUMN locationLongitude,
+                DROP COLUMN locationRadius;
+        </rollback>
+    </changeSet>
+
+    <changeSet id="27.05.26-12:05-device-location-settings" author="custom" context="common">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="devices" columnName="locationsettingsenabled"/>
+            </not>
+        </preConditions>
+        <comment>Columns,new: device-specific location range settings</comment>
+        <sql>
+            ALTER TABLE devices
+                ADD COLUMN locationSettingsEnabled BOOLEAN NOT NULL DEFAULT false,
+                ADD COLUMN locationLatitude DOUBLE PRECISION,
+                ADD COLUMN locationLongitude DOUBLE PRECISION,
+                ADD COLUMN locationRadius INT;
+        </sql>
+        <rollback>
+            ALTER TABLE devices
+                DROP COLUMN locationSettingsEnabled,
+                DROP COLUMN locationLatitude,
+                DROP COLUMN locationLongitude,
+                DROP COLUMN locationRadius;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

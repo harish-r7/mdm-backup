@@ -277,7 +277,8 @@ public class DeviceResource {
                     if (dbDevice != null) {
                         boolean notify = (dbDevice.getConfigurationId() != null &&
                                 !dbDevice.getConfigurationId().equals(device.getConfigurationId())) ||
-                                (dbDevice.getOldNumber() == null && device.getOldNumber() != null);
+                                (dbDevice.getOldNumber() == null && device.getOldNumber() != null) ||
+                                locationSettingsChanged(dbDevice, device);
                         this.deviceDAO.updateDevice(device);
                         if (notify) {
                             this.pushService.notifyDeviceOnSettingUpdate(device.getId());
@@ -316,6 +317,13 @@ public class DeviceResource {
             log.error("Unexpected error when saving/creating device", e);
             return Response.ERROR();
         }
+    }
+
+    private boolean locationSettingsChanged(Device oldDevice, Device newDevice) {
+        return !java.util.Objects.equals(oldDevice.getLocationSettingsEnabled(), newDevice.getLocationSettingsEnabled()) ||
+                !java.util.Objects.equals(oldDevice.getLocationLatitude(), newDevice.getLocationLatitude()) ||
+                !java.util.Objects.equals(oldDevice.getLocationLongitude(), newDevice.getLocationLongitude()) ||
+                !java.util.Objects.equals(oldDevice.getLocationRadius(), newDevice.getLocationRadius());
     }
 
     // =================================================================================================================

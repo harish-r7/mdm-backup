@@ -60,6 +60,22 @@ public class SyncResponse implements Serializable, SyncResponseInt {
     @ApiModelProperty("Strategy of app permission auto-granting")
     private String appPermissions;
 
+    @ApiModelProperty("A flag enabling location range enforcement")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean locationSettingsEnabled;
+
+    @ApiModelProperty("Allowed location latitude")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double locationLatitude;
+
+    @ApiModelProperty("Allowed location longitude")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double locationLongitude;
+
+    @ApiModelProperty("Allowed distance from configured location, in meters")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Integer locationRadius;
+
     @ApiModelProperty("Push notification options")
     private String pushOptions;
 
@@ -658,6 +674,38 @@ public class SyncResponse implements Serializable, SyncResponseInt {
 
     public void setAppPermissions(String appPermissions) {
         this.appPermissions = appPermissions;
+    }
+
+    public Boolean getLocationSettingsEnabled() {
+        return locationSettingsEnabled;
+    }
+
+    public void setLocationSettingsEnabled(Boolean locationSettingsEnabled) {
+        this.locationSettingsEnabled = locationSettingsEnabled;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
+
+    public Integer getLocationRadius() {
+        return locationRadius;
+    }
+
+    public void setLocationRadius(Integer locationRadius) {
+        this.locationRadius = locationRadius;
     }
 
     public String getPushOptions() {

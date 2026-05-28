@@ -420,6 +420,7 @@ angular.module('headwind-kiosk')
 
             $scope.actionChanged = function (updatedApp) {
                 updatedApp.actionChanged = true;
+                updatedApp.selected = true;
                 if (updatedApp.action == 1) {
                     $scope.applications.filter(function (app) {
                         return updatedApp != app && app.pkg === updatedApp.pkg && (app.action == 1);
@@ -604,7 +605,7 @@ angular.module('headwind-kiosk')
                 $scope.showSystemApps = !$scope.showSystemApps;
                 $window.localStorage.setItem('HMDM_configShowSystemApps', $scope.showSystemApps);
                 $scope.applications = allApplications.filter(function (app) {
-                    return (app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
+                    return (app.selected || app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
                 });
             };
 
@@ -623,7 +624,7 @@ angular.module('headwind-kiosk')
                             });
                             $scope.applications = response.data.filter(function (app) {
                                 // Application com.hmdm.launcher is made available by default when creating new configuration
-                                return app.action != '0' && (!app.system || $scope.showSystemApps) || (!configId && app.pkg === 'com.hmdm.launcher' && app.action != '2');
+                                return (app.selected || app.action != '0') && (!app.system || $scope.showSystemApps) || (!configId && app.pkg === 'com.hmdm.launcher' && app.action != '2');
                             });
 
                             // For new configuration use default app for main app and content receiver
@@ -731,8 +732,8 @@ angular.module('headwind-kiosk')
                     }
 
                     var applications = allApplications.filter(function (app) {
-                        // Intentionally using app.action != 0 but not app.action !== 0
-                        return app.action != 0;
+                        // Keep blocked apps linked so they stay visible in the dashboard.
+                        return app.selected || app.actionChanged || app.action != 0;
                     });
 
                     request.applications = applications;
@@ -942,7 +943,7 @@ angular.module('headwind-kiosk')
                             });
 
                             $scope.applications = allApplications.filter(function (app) {
-                                return (app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
+                                return (app.selected || app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
                             });
 
                             syncMainApp();
@@ -1014,7 +1015,7 @@ angular.module('headwind-kiosk')
                             });
 
                             $scope.applications = allApplications.filter(function (app) {
-                                return (app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
+                                return (app.selected || app.actionChanged || app.action != '0') && (!app.system || $scope.showSystemApps);
                             });
 
                             syncMainApp();

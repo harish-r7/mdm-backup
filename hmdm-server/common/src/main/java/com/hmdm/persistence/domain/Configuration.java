@@ -90,6 +90,14 @@ public class Configuration implements CustomerData, Serializable {
     private Boolean disableLocation;
     @ApiModelProperty("Strategy of app permission auto-granting")
     private AppPermissionsType appPermissions = AppPermissionsType.GRANTALL;
+    @ApiModelProperty("A flag enabling location range enforcement")
+    private Boolean locationSettingsEnabled;
+    @ApiModelProperty("Allowed location latitude")
+    private Double locationLatitude;
+    @ApiModelProperty("Allowed location longitude")
+    private Double locationLongitude;
+    @ApiModelProperty("Allowed distance from configured location, in meters")
+    private Integer locationRadius;
     @ApiModelProperty("Push notification options")
     private String pushOptions;
     @ApiModelProperty("Keep-Alive time for MQTT connection")
@@ -683,6 +691,38 @@ public class Configuration implements CustomerData, Serializable {
         this.appPermissions = appPermissions;
     }
 
+    public Boolean getLocationSettingsEnabled() {
+        return locationSettingsEnabled;
+    }
+
+    public void setLocationSettingsEnabled(Boolean locationSettingsEnabled) {
+        this.locationSettingsEnabled = locationSettingsEnabled;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
+
+    public Integer getLocationRadius() {
+        return locationRadius;
+    }
+
+    public void setLocationRadius(Integer locationRadius) {
+        this.locationRadius = locationRadius;
+    }
+
     public String getPushOptions() {
         return pushOptions;
     }
@@ -926,6 +966,10 @@ public class Configuration implements CustomerData, Serializable {
         copy.setRequestUpdates(getRequestUpdates());
         copy.setDisableLocation(getDisableLocation());
         copy.setAppPermissions(getAppPermissions());
+        copy.setLocationSettingsEnabled(getLocationSettingsEnabled());
+        copy.setLocationLatitude(getLocationLatitude());
+        copy.setLocationLongitude(getLocationLongitude());
+        copy.setLocationRadius(getLocationRadius());
         copy.setPushOptions(getPushOptions());
         copy.setKeepaliveTime(getKeepaliveTime());
         copy.setAutoBrightness(getAutoBrightness());

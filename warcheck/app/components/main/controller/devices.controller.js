@@ -429,10 +429,14 @@ angular.module('headwind-kiosk')
         alert('Device number not found');
         return;
     }
+    if (device.forceSyncLoading) {
+        return;
+    }
 
     var number = device.number.replace(/\//g, "~2F");
+    device.forceSyncLoading = true;
 
-    $http.post('rest/private/devices/' + number + '/force-sync')
+    $http.post('rest/private/devices/' + number + '/force-sync', {}, {timeout: 15000})
         .then(function(response) {
             if (response.data && response.data.status === 'OK') {
                 alert('Force sync command sent to ' + device.number);
@@ -443,6 +447,8 @@ angular.module('headwind-kiosk')
             }
         }, function(error) {
             alert('Failed to send force sync command');
+        }).finally(function() {
+            device.forceSyncLoading = false;
         });
 };
 
@@ -457,6 +463,7 @@ angular.module('headwind-kiosk')
             drag: null
         };
         var remoteControlTimer = null;
+        var remoteControlFrameLoading = false;
 
         function remoteNumber(device) {
             return device.number.replace(/\//g, "~2F");
@@ -473,6 +480,10 @@ angular.module('headwind-kiosk')
             if (!$scope.remoteControl.visible || !$scope.remoteControl.device) {
                 return;
             }
+            if (remoteControlFrameLoading) {
+                return;
+            }
+            remoteControlFrameLoading = true;
             $http.get('rest/private/remote-control/' + remoteNumber($scope.remoteControl.device) + '/frame')
                 .then(function(response) {
                     var data = response.data ? response.data.data : null;
@@ -484,6 +495,8 @@ angular.module('headwind-kiosk')
                     } else {
                         $scope.remoteControl.message = 'Waiting for tablet screen permission and first frame...';
                     }
+                }).finally(function() {
+                    remoteControlFrameLoading = false;
                 });
         }
 
@@ -504,7 +517,7 @@ angular.module('headwind-kiosk')
                     $scope.remoteControl.loading = false;
                     if (response.data && response.data.status === 'OK') {
                         pollRemoteFrame();
-                        remoteControlTimer = $interval(pollRemoteFrame, 1000);
+                        remoteControlTimer = $interval(pollRemoteFrame, 500);
                     } else {
                         $scope.remoteControl.message = 'Failed to start remote control session';
                     }
@@ -1345,7 +1358,8 @@ angular.module('headwind-kiosk')
                 'dynamicButtonTextSuffix': localization.localize('table.filtering.suffix.group')
             };
 
-            var deviceFields = ["id", "number", "description", "configurationId", "imei", "phone", "groups", "custom1", "custom2", "custom3", "oldNumber"];
+            var deviceFields = ["id", "number", "description", "configurationId", "imei", "phone", "groups", "custom1", "custom2", "custom3",
+                "locationSettingsEnabled", "locationLatitude", "locationLongitude", "locationRadius", "oldNumber"];
             $scope.device = {};
             for (var prop in device) {
                 if (device.hasOwnProperty(prop)) {
@@ -1384,6 +1398,17 @@ angular.module('headwind-kiosk')
                     $scope.errorMessage = localization.localize('error.empty.group');
                 } else if (/[\/?&]/.test($scope.device.number)) {
                     $scope.errorMessage = localization.localize('error.invalid.character');
+                } else if ($scope.device.locationSettingsEnabled &&
+                    ($scope.device.locationLatitude === null || $scope.device.locationLatitude === undefined ||
+                        $scope.device.locationLatitude < -90 || $scope.device.locationLatitude > 90)) {
+                    $scope.errorMessage = localization.localize('error.device.location.latitude');
+                } else if ($scope.device.locationSettingsEnabled &&
+                    ($scope.device.locationLongitude === null || $scope.device.locationLongitude === undefined ||
+                        $scope.device.locationLongitude < -180 || $scope.device.locationLongitude > 180)) {
+                    $scope.errorMessage = localization.localize('error.device.location.longitude');
+                } else if ($scope.device.locationSettingsEnabled &&
+                    (!$scope.device.locationRadius || $scope.device.locationRadius < 1)) {
+                    $scope.errorMessage = localization.localize('error.device.location.radius');
                 } else {
                     $scope.device.groups = $scope.groupsSelection;
 

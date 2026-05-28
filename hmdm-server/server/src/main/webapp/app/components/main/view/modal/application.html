@@ -22,12 +22,44 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="!fileSelected && application.type === 'app'">
+        <div class='form-group' ng-if="isNewApp && application.type === 'app'">
+            <label class='col-sm-4 control-label' localized>form.application.install.source</label>
+            <div class='col-sm-8'>
+                <div class="btn-group full-width">
+                    <button type="button" class="btn btn-default" ng-class="{active: application.installSource === 'apk'}"
+                            ng-click="setInstallSource('apk')" localized>form.application.install.source.apk</button>
+                    <button type="button" class="btn btn-default" ng-class="{active: application.installSource === 'play'}"
+                            ng-click="setInstallSource('play')" localized>form.application.install.source.play</button>
+                    <button type="button" class="btn btn-default" ng-class="{active: application.installSource === 'preinstalled'}"
+                            ng-click="setInstallSource('preinstalled')" localized>form.application.install.source.preinstalled</button>
+                </div>
+                <div class="field-hint" ng-if="application.installSource === 'apk'" localized>form.application.install.source.apk.hint</div>
+                <div class="field-hint" ng-if="application.installSource === 'play'" localized>form.application.install.source.play.hint</div>
+                <div class="field-hint" ng-if="application.installSource === 'preinstalled'" localized>form.application.install.source.preinstalled.hint</div>
+            </div>
+        </div>
+
+        <div class='form-group' ng-if="!fileSelected && application.type === 'app' && application.installSource !== 'apk'">
             <label class='col-sm-4 control-label' for="applicationPkg" localized>form.application.pkg</label>
             <div class='col-sm-8'>
                 <input localized-title="form.application.pkg.title" ng-model='application.pkg' type='text'
+                       ng-change="updatePlayStoreUrl()"
                        class='form-control' id="applicationPkg" localized-placeholder="form.application.pkg.placeholder"/>
             </div>
+        </div>
+
+        <div class='form-group' ng-if="application.type === 'app' && application.installSource === 'play'">
+            <label class='col-sm-4 control-label' for="applicationPlayStoreInput" localized>form.application.play.store.input</label>
+            <div class='col-sm-6'>
+                <input ng-model='application.playStoreInput' type='text'
+                       class='form-control' id="applicationPlayStoreInput"
+                       localized-placeholder="form.application.play.store.input.placeholder"/>
+            </div>
+            <div class='col-sm-2'>
+                <button type="button" class="btn btn-default full-width" ng-click="applyPlayStoreInput()" localized>button.apply</button>
+            </div>
+            <div class="col-sm-4">&nbsp;</div>
+            <div class="col-sm-8 field-hint" localized>form.application.play.store.input.hint</div>
         </div>
 
         <div class='form-group' ng-if="fileSelected && application.type === 'app'">
@@ -46,11 +78,11 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="!fileSelected && application.type === 'app'">
+        <div class='form-group' ng-if="!fileSelected && application.type === 'app' && (!isNewApp || application.installSource !== 'apk')">
             <label class='col-sm-4 control-label' for="applicationVersion" localized>form.application.version</label>
             <div class='col-sm-8'>
                 <input localized-title="form.application.version.title" ng-model='application.version' type='text'
-                       class='form-control' ng-disabled="application.id" id="applicationVersion"
+                       class='form-control' ng-disabled="application.id || application.installSource === 'play' || application.installSource === 'preinstalled'" id="applicationVersion"
                        localized-placeholder="form.application.version.placeholder"/>
             </div>
         </div>
@@ -63,7 +95,7 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="application.type === 'app'">
+        <div class='form-group' ng-if="application.type === 'app' && (!isNewApp || application.installSource === 'apk')">
             <label class='col-sm-4 control-label' for="applicationArch" localized>form.application.arch</label>
             <div class='col-sm-8'>
                 <select class="form-control" ng-model='application.arch' id="applicationArch" ng-if="!application.id">
@@ -85,7 +117,7 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="application.type === 'app'">
+        <div class='form-group' ng-if="application.type === 'app' && !isNewApp">
             <label class='col-sm-4 control-label' for="applicationSystem" localized>form.application.system</label>
             <div class='col-sm-2'>
                 <input localized-title="form.application.system.title" ng-model='application.system' type='checkbox'
@@ -93,7 +125,7 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="application.type === 'app'">
+        <div class='form-group' ng-if="application.type === 'app' && application.installSource !== 'play'">
             <label class='col-sm-4 control-label' for="applicationRunAfterInstall"
                    localized>form.application.run.after.install</label>
             <div class='col-sm-2'>
@@ -109,7 +141,7 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="application.type === 'app' || application.type === 'web'">
+        <div class='form-group' ng-if="application.type === 'web' || (application.type === 'app' && (application.installSource === 'play' || !isNewApp))">
             <label class='col-sm-4 control-label' for="applicationUrl" localized>form.application.url</label>
             <div class='col-sm-8'>
                 <!-- We enable editing the URL for better user experience. The URL changes will be applied
@@ -117,7 +149,7 @@
                 <input title="{{localization.localize(application.split ? 'form.application.url.disabled' : 'form.application.url.title')}}"
                        ng-model='application.url' type='text'
                        class='form-control' id="applicationUrl"
-                       ng-disabled="(application.system || (application.id && application.split))">
+                       ng-disabled="(application.system || application.playStore || (application.id && application.split))">
             </div>
             <div class="col-sm-4">&nbsp;</div>
             <div class="col-sm-8 field-hint" localized>form.application.url.hint</div>
@@ -139,7 +171,7 @@
             </div>
         </div>
 
-        <div class='form-group' ng-if="isNewApp && application.type === 'app'">
+        <div class='form-group' ng-if="isNewApp && application.type === 'app' && application.installSource === 'apk'">
             <label class='col-sm-4 control-label' localized>form.application.file</label>
             <div class='col-sm-8'>
                 <div class="btn btn-default full-width btn-upload" ng-if="!file.path"

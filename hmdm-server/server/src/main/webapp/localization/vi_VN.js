@@ -407,6 +407,14 @@ document.localization ['vi_VN'] = {
 
     'form.configuration.settings.revoke.location.permission': 'Không cấp quyền vị trí',
     'form.configuration.settings.revoke.location.permission.hint': 'Nếu được đặt, quyền vị trí sẽ không được cấp cho agent MDM và nó không thể theo dõi vị trí thiết bị',
+    'form.configuration.settings.location.enabled': 'Location limit',
+    'form.configuration.settings.location.latitude': 'Latitude',
+    'form.configuration.settings.location.latitude.placeholder': 'Latitude',
+    'form.configuration.settings.location.longitude': 'Longitude',
+    'form.configuration.settings.location.longitude.placeholder': 'Longitude',
+    'form.configuration.settings.location.radius': 'Radius, m',
+    'form.configuration.settings.location.radius.placeholder': 'Meters',
+    'form.configuration.settings.location.hint': 'Locks the tablet outside this location radius.',
     'form.configuration.settings.apps.permissions': 'Quyền cho ứng dụng khác',
     'form.configuration.settings.apps.permissions.grant': 'Tự cấp tất cả quyền',
     'form.configuration.settings.apps.permissions.ask.location': 'Tự cấp tất cả, hỏi người dùng về quyền vị trí',
@@ -816,6 +824,7 @@ document.localization ['vi_VN'] = {
     'tab.plugins': 'Plugin',
     
     'tab.configeditor.common.settings': 'Cài đặt chung',
+    'tab.configeditor.location.settings': 'Location',
     'tab.configeditor.design.settings': 'Cài đặt thiết kế',
     'tab.configeditor.applications': 'Ứng dụng',
     'tab.configeditor.mdm.settings': 'Cài đặt MDM',
@@ -982,7 +991,7 @@ document.localization ['vi_VN'] = {
     'breadcrumb.config.details': 'Chi tiết',
     'breadcrumb.application.versions': 'Phiên bản',
 
-    'app.name': 'Headwind MDM',
+    'app.name': 'Sugunafoods MDM',
     'app.vendor.name': "h-mdm.com",
     'app.vendor.link': "https://h-mdm.com",
     'app.description': 'là một hệ thống quản lý thiết bị di động mã nguồn mở',

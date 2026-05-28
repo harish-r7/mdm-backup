@@ -119,6 +119,16 @@ angular.module('headwind-kiosk')
             modalInstance.result.then($scope.search, $scope.search);
         };
 
+        $scope.addPlayStoreApplication = function () {
+            $scope.editApplication({
+                arch: null,
+                type: 'app',
+                playStore: true,
+                version: '0',
+                url: 'market://details?id='
+            });
+        };
+
         $scope.clarifyOnCommon = function () {
             alertService.showAlertMessage(localization.localize('common.app.clarification'));
         };
@@ -162,6 +172,13 @@ angular.module('headwind-kiosk')
         $scope.application = angular.copy(application, {});
         if ($scope.application.iconId === null || $scope.application.iconId === undefined) {
             $scope.application.iconId = -1;
+        }
+        $scope.application.playStore = !!$scope.application.playStore ||
+            (($scope.application.url || '').indexOf('market://details') === 0);
+        $scope.application.installSource = $scope.application.playStore ? 'play' :
+            ($scope.application.system ? 'preinstalled' : 'apk');
+        if ($scope.application.playStore) {
+            $scope.application.playStoreInput = $scope.application.pkg || $scope.application.url;
         }
 
         $scope.appdesc = {};
@@ -285,6 +302,79 @@ angular.module('headwind-kiosk')
             
             $scope.application.type = 'app';
         }
+
+        $scope.isPlayStoreApp = function () {
+            return $scope.application.type === 'app' && $scope.application.installSource === 'play';
+        };
+
+        $scope.setInstallSource = function (source) {
+            $scope.application.installSource = source;
+            $scope.application.playStore = source === 'play';
+            $scope.application.system = source === 'preinstalled';
+
+            if (source === 'play') {
+                $scope.clearFile();
+                $scope.application.version = '0';
+                $scope.application.playStoreInput = $scope.application.playStoreInput || $scope.application.pkg || $scope.application.url;
+                $scope.updatePlayStoreUrl();
+            } else if (source === 'preinstalled') {
+                $scope.clearFile();
+                $scope.application.version = '0';
+                $scope.application.url = null;
+                $scope.application.arch = null;
+            } else {
+                $scope.application.playStore = false;
+                $scope.application.system = false;
+                $scope.application.playStoreInput = null;
+                if (($scope.application.url || '').indexOf('market://details') === 0) {
+                    $scope.application.url = null;
+                }
+            }
+        };
+
+        $scope.updatePlayStoreUrl = function () {
+            if (!$scope.isPlayStoreApp()) {
+                return;
+            }
+            var pkg = ($scope.application.pkg || '').trim();
+            $scope.application.url = 'market://details?id=' + pkg;
+        };
+
+        const getPlayStorePackage = function (value) {
+            var input = (value || '').trim();
+            var idMatch = input.match(/[?&]id=([^&]+)/) || input.match(/market:\/\/details\?id=([^&]+)/);
+            if (idMatch && idMatch[1]) {
+                return decodeURIComponent(idMatch[1]).trim();
+            }
+            if (/^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/.test(input)) {
+                return input;
+            }
+            return null;
+        };
+
+        $scope.applyPlayStoreInput = function () {
+            $scope.errorMessage = undefined;
+            var pkg = getPlayStorePackage($scope.application.playStoreInput);
+            if (!pkg) {
+                $scope.errorMessage = localization.localize('error.invalid.play.store.input');
+                return;
+            }
+            $scope.application.pkg = pkg;
+            $scope.application.version = '0';
+            if (!$scope.application.name) {
+                $scope.application.name = pkg;
+            }
+            $scope.updatePlayStoreUrl();
+        };
+
+        $scope.playStoreToggled = function () {
+            if ($scope.isPlayStoreApp()) {
+                $scope.clearFile();
+                $scope.application.version = $scope.application.version || '0';
+                $scope.application.playStoreInput = $scope.application.playStoreInput || $scope.application.pkg || $scope.application.url;
+                $scope.updatePlayStoreUrl();
+            }
+        };
 
         $scope.onStartedUpload = function (files) {
             $scope.successMessage = undefined;
@@ -486,7 +576,7 @@ angular.module('headwind-kiosk')
                 return 'error.empty.app.name';
             } else if (!$scope.application.pkg && !$scope.fileSelected) {
                 return 'error.empty.app.pkg';
-            } else if (!$scope.application.version && !$scope.fileSelected) {
+            } else if (!$scope.application.version && !$scope.fileSelected && !$scope.isPlayStoreApp()) {
                 return 'error.empty.app.version';
             }
 
@@ -498,6 +588,23 @@ angular.module('headwind-kiosk')
             if (request.iconId == -1) {
                 delete request.iconId;
             }
+            delete request.playStore;
+            delete request.installSource;
+
+            if ($scope.isPlayStoreApp()) {
+                var pkg = getPlayStorePackage(request.playStoreInput || request.pkg || request.url);
+                if (pkg) {
+                    request.pkg = pkg;
+                }
+                request.version = request.version || '0';
+                request.url = 'market://details?id=' + (request.pkg || '').trim();
+                request.system = false;
+            } else if ($scope.application.installSource === 'preinstalled') {
+                request.version = request.version || '0';
+                request.url = null;
+                request.system = true;
+            }
+            delete request.playStoreInput;
 
             if ($scope.isNewApp) {
                 if ($scope.fileSelected) {

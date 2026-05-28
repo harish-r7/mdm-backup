@@ -39,6 +39,7 @@ import com.hmdm.launcher.R;
 import com.hmdm.launcher.helper.SettingsHelper;
 import com.hmdm.launcher.json.Application;
 import com.hmdm.launcher.json.ServerConfig;
+import com.hmdm.launcher.util.GeofencePolicy;
 import com.hmdm.launcher.util.Utils;
 
 import java.util.ArrayList;
@@ -240,6 +241,12 @@ public class ProUtils {
             if (!isEnabled(config.getKioskLockButtons())) {
                 features |= DevicePolicyManager.LOCK_TASK_FEATURE_GLOBAL_ACTIONS;
             }
+            if (!isEnabled(config.getKioskHome())) {
+                features &= ~DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+            }
+            if (!isEnabled(config.getKioskRecents())) {
+                features &= ~DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
+            }
         } catch (Exception e) {
             Log.w(Const.LOG_TAG, "Failed to build kiosk lock-task features", e);
         }
@@ -394,11 +401,11 @@ public class ProUtils {
     }
 
     public static void processConfig(Context context, ServerConfig config) {
-        // Stub
+        GeofencePolicy.clearIfDisabled(context, config);
     }
 
     public static void processLocation(Context context, Location location, String provider) {
-        // Stub    
+        GeofencePolicy.evaluate(context, location);
     }
 
     public static String getAppName(Context context) {

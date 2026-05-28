@@ -70,6 +70,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 
@@ -115,6 +116,7 @@ import com.hmdm.launcher.ui.custom.StatusBarUpdater;
 import com.hmdm.launcher.util.AppInfo;
 import com.hmdm.launcher.util.CrashLoopProtection;
 import com.hmdm.launcher.util.DeviceInfoProvider;
+import com.hmdm.launcher.util.GeofencePolicy;
 import com.hmdm.launcher.util.InstallUtils;
 import com.hmdm.launcher.util.PreferenceLogger;
 import com.hmdm.launcher.util.RemoteLogger;
@@ -268,6 +270,23 @@ public class MainActivity
                 case Const.ACTION_DISABLE_BLOCK_WINDOW:
                     if ( applicationNotAllowed != null) {
                         applicationNotAllowed.setVisibility(View.GONE);
+                    }
+                    break;
+
+                case Const.ACTION_GEOFENCE_STATE_CHANGED:
+                    if (GeofencePolicy.isOutside(MainActivity.this)) {
+                        if (isBackground) {
+                            Intent restoreLauncherIntent = new Intent(context, MainActivity.class);
+                            restoreLauncherIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(restoreLauncherIntent);
+                        } else {
+                            showLockScreen();
+                        }
+                    } else {
+                        ServerConfig currentConfig = settingsHelper.getConfig();
+                        if (currentConfig == null || currentConfig.getLock() == null || !currentConfig.getLock()) {
+                            hideLockScreen();
+                        }
                     }
                     break;
 
@@ -499,6 +518,7 @@ public class MainActivity
     private void initReceiver() {
         IntentFilter intentFilter = new IntentFilter(Const.ACTION_UPDATE_CONFIGURATION);
         intentFilter.addAction(Const.ACTION_HIDE_SCREEN);
+        intentFilter.addAction(Const.ACTION_GEOFENCE_STATE_CHANGED);
         intentFilter.addAction(Const.ACTION_EXIT);
         intentFilter.addAction(Const.ACTION_POLICY_VIOLATION);
         intentFilter.addAction(Const.ACTION_EXIT_KIOSK);
@@ -1477,9 +1497,24 @@ protected void onResume() {
 
     private void startLocationService() {
         ServerConfig config = settingsHelper.getConfig();
+        if (config == null) {
+            return;
+        }
+
         Intent intent = new Intent(this, LocationService.class);
-        intent.setAction(config.getRequestUpdates() != null ? config.getRequestUpdates() : LocationService.ACTION_STOP);
-        startService(intent);
+        String action = config.getRequestUpdates();
+        if (action == null && Boolean.TRUE.equals(config.getLocationSettingsEnabled())) {
+            // If location-based policies are enabled but the requestUpdates field is absent,
+            // still start location monitoring so geofence enforcement works.
+            action = LocationService.ACTION_UPDATE_GPS;
+        }
+        intent.setAction(action != null ? action : LocationService.ACTION_STOP);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(this, intent);
+        } else {
+            startService(intent);
+        }
     }
 
     @Override
@@ -1784,7 +1819,7 @@ protected void onResume() {
         scheduleDeviceInfoSending();
         scheduleInstalledAppsRun();
 
-        if (config.getLock() != null && config.getLock()) {
+        if ((config.getLock() != null && config.getLock()) || GeofencePolicy.isOutside(this)) {
             showLockScreen();
             return;
         } else {
@@ -1805,6 +1840,9 @@ protected void onResume() {
 
         if (ProUtils.kioskModeRequired(this)) {
             String kioskApp = settingsHelper.getConfig().getMainApp();
+            if (getPackageName().equals(kioskApp) && !ProUtils.isKioskModeRunning(this)) {
+                startHeadwindSelfKiosk(settingsHelper.getConfig());
+            }
             if (kioskApp != null && kioskApp.trim().length() > 0 &&
                     // If Headwind MDM itself is set as kiosk app, the kiosk mode is already turned on;
                     // So here we just proceed to drawing the content
@@ -1969,6 +2007,9 @@ protected void onResume() {
         }
         String lockAdminMessage = settingsHelper.getConfig().getLockMessage();
         String lockMessage = getString(R.string.device_locked, SettingsHelper.getInstance(this).getDeviceId());
+        if (GeofencePolicy.isOutside(this)) {
+            lockAdminMessage = getString(R.string.device_locked_outside_location);
+        }
         if (lockAdminMessage != null) {
             lockMessage += " " + lockAdminMessage;
         }

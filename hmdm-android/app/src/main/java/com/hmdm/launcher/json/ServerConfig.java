@@ -66,6 +66,10 @@ public class ServerConfig {
     private String requestUpdates;
     private Boolean disableLocation;
     private String appPermissions;
+    private Boolean locationSettingsEnabled;
+    private Double locationLatitude;
+    private Double locationLongitude;
+    private Integer locationRadius;
 
     private Boolean usbStorage;
     private Boolean autoBrightness;
@@ -429,6 +433,38 @@ public class ServerConfig {
 
     public void setAppPermissions(String appPermissions) {
         this.appPermissions = appPermissions;
+    }
+
+    public Boolean getLocationSettingsEnabled() {
+        return locationSettingsEnabled;
+    }
+
+    public void setLocationSettingsEnabled(Boolean locationSettingsEnabled) {
+        this.locationSettingsEnabled = locationSettingsEnabled;
+    }
+
+    public Double getLocationLatitude() {
+        return locationLatitude;
+    }
+
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
+    }
+
+    public Double getLocationLongitude() {
+        return locationLongitude;
+    }
+
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
+    }
+
+    public Integer getLocationRadius() {
+        return locationRadius;
+    }
+
+    public void setLocationRadius(Integer locationRadius) {
+        this.locationRadius = locationRadius;
     }
 
     public Boolean getUsbStorage() {

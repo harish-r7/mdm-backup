@@ -90,7 +90,7 @@
 
 .header {
     height: 50px;
-    background-color: #7a9ab9;
+    background-color: #d98b8b;
 }
 
 .navbar-nav .expiry-warning {
@@ -109,7 +109,7 @@
 
 .login-logo .logo {
     font-size: 30px;
-    color: #4c788c;
+    color: #b45f5f;
 }
 
 .login-footer {
@@ -124,19 +124,19 @@
 .header .logo-text {
     margin-top: 10px;
     padding-left: 15px;
-    color: #afd0df;
+    color: #ffe5e5;
     font-size: 20px;
 }
 
 .header .logo-text a, .header .logo-text a:active {
     text-decoration: none;
-    color: #afd0df !important;
+    color: #ffe5e5 !important;
     font-size: 20px !important;
 }
 
 .header .logo-text a:hover {
     text-decoration: none;
-    color: #d0e3eb !important;
+    color: #fff2f2 !important;
 }
 
 .header a {
@@ -144,7 +144,7 @@
 }
 
 .header .open a, .header .open .dropdown-menu {
-    background-color: #7a9ab9 !important;
+    background-color: #d98b8b !important;
 }
 
 .header .open .dropdown-menu {
@@ -195,11 +195,11 @@
 }
 
 .btn-promo {
-    background-color: #7a9ab9;
+    background-color: #d98b8b;
 }
 
 .btn-promo:hover {
-    background-color: #9bb4cc;
+    background-color: #e3a5a5;
 }
 
 .fullscreen {
@@ -446,7 +446,7 @@ td.app-desc span {
 }
 
 .device-list-config label {
-    color: #97b8c1 !important;
+    color: #d89595 !important;
     font-weight: normal !important;
     text-align: left !important;
 }
@@ -592,7 +592,7 @@ td.app-desc span {
 }
 
 .notification .event {
-    background: #cde6ec;
+    background: #f5d6d6;
 }
 
 .marker-popup span {
@@ -603,7 +603,7 @@ td.app-desc span {
 
 .marker-popup .show-photo {
     font-weight: normal !important;
-    color: #337ab7;
+    color: #c46f6f;
 }
 
 .leaflet-popup-content {
@@ -685,7 +685,7 @@ td.app-desc span {
 }
 
 .device-list .selected {
-    background: #cde6ec;
+    background: #f5d6d6;
 }
 
 .device-list .info {
@@ -694,7 +694,7 @@ td.app-desc span {
 
 .device-list .info .device-title {
     cursor: pointer;
-    color: #337ab7;
+    color: #c46f6f;
     font-weight: bold;
 }
 
@@ -1276,7 +1276,7 @@ td.app-desc span {
     padding: 5px 15px 3px 15px;
     border-top-left-radius: 10px 10px;
     border-top-right-radius: 10px 10px;
-    background: #B5D0D0;
+    background: #f0c4c4;
 }
 
 .marker-popup .modal-footer {
@@ -1447,7 +1447,7 @@ td.app-desc span {
 .help-title {
     font-size: 16px;
     font-weight: bold;
-    color: #4f81bd;
+    color: #c46f6f;
     margin-top: 20px;
 }
 
@@ -1996,7 +1996,7 @@ td.app-desc span {
 }
 
 .print-invoice .panel {
-    border: 5px solid #465b76 !important;
+    border: 5px solid #b45f5f !important;
 }
 
 .print-invoice .panel-body {
@@ -2061,7 +2061,7 @@ td.app-desc span {
 }
 
 .left-color-border {
-    border-left: 3px solid #465b76;
+    border-left: 3px solid #b45f5f;
 }
 
 .fixed-small-width {
@@ -2095,7 +2095,7 @@ td.app-desc span {
 }
 
 .link {
-    color: #337ab7;
+    color: #c46f6f;
 }
 
 .small-column {
@@ -2295,7 +2295,7 @@ div.form-group input.common-checkbox {
 }
 
 .spinner > div {
-    background-color: #6795b4;
+    background-color: #d98b8b;
     height: 100%;
     width: 6px;
     display: inline-block;

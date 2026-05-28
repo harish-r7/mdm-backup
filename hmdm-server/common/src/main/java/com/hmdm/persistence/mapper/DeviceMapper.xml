@@ -26,7 +26,9 @@
     <sql id="deviceWithGroupsSelect">
         SELECT devices.id AS deviceId, devices.number, devices.description, devices.lastUpdate,
                devices.configurationId, devices.info, devices.imei, devices.phone, devices.customerId,
-               devices.custom1, devices.custom2, devices.custom3, devices.oldNumber,
+               devices.custom1, devices.custom2, devices.custom3,
+               devices.locationSettingsEnabled, devices.locationLatitude, devices.locationLongitude, devices.locationRadius,
+               devices.oldNumber,
                groups.id AS groupId, groups.name AS groupName,
                configurations.name as configName
         FROM devices
@@ -58,6 +60,10 @@
         <result property="custom1" column="custom1"/>
         <result property="custom2" column="custom2"/>
         <result property="custom3" column="custom3"/>
+        <result property="locationSettingsEnabled" column="locationSettingsEnabled"/>
+        <result property="locationLatitude" column="locationLatitude"/>
+        <result property="locationLongitude" column="locationLongitude"/>
+        <result property="locationRadius" column="locationRadius"/>
         <result property="oldNumber" column="oldNumber"/>
         <result property="fastSearch" column="fastSearch"/>
 
@@ -69,15 +75,23 @@
 
     <insert id="insertDevice" parameterType="Device" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         INSERT INTO devices(number, description, lastUpdate, configurationId,
-            imei, phone, customerId, custom1, custom2, custom3, oldNumber, fastSearch)
+            imei, phone, customerId, custom1, custom2, custom3,
+            locationSettingsEnabled, locationLatitude, locationLongitude, locationRadius,
+            oldNumber, fastSearch)
         VALUES (#{number}, #{description}, #{lastUpdate}, #{configurationId},
-            #{imei}, #{phone}, #{customerId}, #{custom1}, #{custom2}, #{custom3}, #{oldNumber}, #{fastSearch});
+            #{imei}, #{phone}, #{customerId}, #{custom1}, #{custom2}, #{custom3},
+            #{locationSettingsEnabled}, #{locationLatitude}, #{locationLongitude}, #{locationRadius},
+            #{oldNumber}, #{fastSearch});
     </insert>
 
     <update id="updateDevice" parameterType="Device">
         UPDATE devices SET number = #{number}, description = #{description},
                            configurationId = #{configurationId}, imei = #{imei}, phone = #{phone},
                            custom1=#{custom1}, custom2=#{custom2}, custom3=#{custom3},
+                           locationSettingsEnabled=#{locationSettingsEnabled},
+                           locationLatitude=#{locationLatitude},
+                           locationLongitude=#{locationLongitude},
+                           locationRadius=#{locationRadius},
                            oldNumber=#{oldNumber}, fastSearch=#{fastSearch} WHERE id = #{id}
     </update>
 
@@ -251,7 +265,9 @@
                (devices.infojson ->> 'kioskMode')::BOOLEAN AS kioskMode,
                devices.infojson ->> 'androidVersion' AS androidVersion,
                devices.infojson ->> 'serial' AS serial,
-               devices.custom1, devices.custom2, devices.custom3, devices.oldNumber, devices.fastSearch,
+               devices.custom1, devices.custom2, devices.custom3,
+               devices.locationSettingsEnabled, devices.locationLatitude, devices.locationLongitude, devices.locationRadius,
+               devices.oldNumber, devices.fastSearch,
                groups.id AS groupId, groups.name AS groupName,
                configurations.name as configName,
                applications.pkg AS launcherPkg,

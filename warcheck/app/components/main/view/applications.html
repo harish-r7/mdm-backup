@@ -2,7 +2,7 @@
 <div ng-controller="ApplicationsTabController">
     <form class="form-horizontal">
     <div class='form-group'>
-        <div class="col-sm-10">
+        <div class="col-sm-8">
             <input type='text'
                    ng-model='search.searchValue'
                    ng-change="search()"
@@ -12,8 +12,9 @@
                    class='form-control'>
         </div>
 
-        <div class='device-search-buttons col-sm-2'>
+        <div class='device-search-buttons col-sm-4'>
             <button ng-if="hasPermission('edit_applications')" type='button' class='btn btn-default' ng-click='editApplication( {arch:null} )' localized>button.add</button>
+            <button ng-if="hasPermission('edit_applications')" type='button' class='btn btn-default' ng-click='addPlayStoreApplication()' localized>button.add.play.store</button>
         </div>
     </div>
 
