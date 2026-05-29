@@ -28,7 +28,7 @@
                devices.configurationId, devices.info, devices.imei, devices.phone, devices.customerId,
                devices.custom1, devices.custom2, devices.custom3,
                devices.locationSettingsEnabled, devices.locationLatitude, devices.locationLongitude, devices.locationRadius,
-               devices.oldNumber,
+               devices.configOverrides, devices.oldNumber,
                groups.id AS groupId, groups.name AS groupName,
                configurations.name as configName
         FROM devices
@@ -64,6 +64,7 @@
         <result property="locationLatitude" column="locationLatitude"/>
         <result property="locationLongitude" column="locationLongitude"/>
         <result property="locationRadius" column="locationRadius"/>
+        <result property="configOverrides" column="configOverrides"/>
         <result property="oldNumber" column="oldNumber"/>
         <result property="fastSearch" column="fastSearch"/>
 
@@ -77,11 +78,11 @@
         INSERT INTO devices(number, description, lastUpdate, configurationId,
             imei, phone, customerId, custom1, custom2, custom3,
             locationSettingsEnabled, locationLatitude, locationLongitude, locationRadius,
-            oldNumber, fastSearch)
+            configOverrides, oldNumber, fastSearch)
         VALUES (#{number}, #{description}, #{lastUpdate}, #{configurationId},
             #{imei}, #{phone}, #{customerId}, #{custom1}, #{custom2}, #{custom3},
             #{locationSettingsEnabled}, #{locationLatitude}, #{locationLongitude}, #{locationRadius},
-            #{oldNumber}, #{fastSearch});
+            #{configOverrides}, #{oldNumber}, #{fastSearch});
     </insert>
 
     <update id="updateDevice" parameterType="Device">
@@ -92,6 +93,7 @@
                            locationLatitude=#{locationLatitude},
                            locationLongitude=#{locationLongitude},
                            locationRadius=#{locationRadius},
+                           configOverrides=#{configOverrides},
                            oldNumber=#{oldNumber}, fastSearch=#{fastSearch} WHERE id = #{id}
     </update>
 
@@ -267,7 +269,7 @@
                devices.infojson ->> 'serial' AS serial,
                devices.custom1, devices.custom2, devices.custom3,
                devices.locationSettingsEnabled, devices.locationLatitude, devices.locationLongitude, devices.locationRadius,
-               devices.oldNumber, devices.fastSearch,
+               devices.configOverrides, devices.oldNumber, devices.fastSearch,
                groups.id AS groupId, groups.name AS groupName,
                configurations.name as configName,
                applications.pkg AS launcherPkg,

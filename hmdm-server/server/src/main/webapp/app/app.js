@@ -280,6 +280,15 @@ angular.module('headwind-kiosk',
                     parent: 'configurations'
                 }
             })
+            .state('deviceConfigEditor', {
+                url: '/configuration/device/{deviceId}',
+                templateUrl: 'app/components/main/view/configuration.html',
+                controller: 'ConfigurationEditorController',
+                ncyBreadcrumb: {
+                    label: 'Tablet configuration',
+                    parent: 'configurations'
+                }
+            })
             .state('login', {
                 url: '/login',
                 templateUrl: 'app/components/main/view/login.html',

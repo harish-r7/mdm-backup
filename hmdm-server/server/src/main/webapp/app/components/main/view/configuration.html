@@ -13,7 +13,8 @@
 
             <div class='form-group'>
                 <div class='center'>
-                    <h3 ng-if="!isTypical"><span localized>form.configuration.title</span> &quot;{{configuration.name}}&quot;</h3>
+                    <h3 ng-if="deviceConfigMode">Tablet configuration &quot;{{deviceConfigDevice.number}}&quot; from &quot;{{configuration.name}}&quot;</h3>
+                    <h3 ng-if="!isTypical && !deviceConfigMode"><span localized>form.configuration.title</span> &quot;{{configuration.name}}&quot;</h3>
                     <h3 ng-if="isTypical"><span localized>form.configuration.title.typical</span> &quot;{{configuration.name}}&quot;</h3>
                 </div>
             </div>

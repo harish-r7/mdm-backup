@@ -3,6 +3,7 @@ angular.module('headwind-kiosk')
     .factory('deviceService', function ($resource) {
         return $resource('', {}, {
             getAllDevices: {url: 'rest/private/devices/search', method: 'POST'},
+            getDeviceById: {url: 'rest/private/devices/id/:id', method: 'GET'},
             updateDevice: {url: 'rest/private/devices', method: 'PUT'},
             updateDeviceDesc: {url: 'rest/private/devices/:id/description', method: 'POST'},
             removeDevice: {url: 'rest/private/devices/:id', method: 'DELETE'},
@@ -10,7 +11,9 @@ angular.module('headwind-kiosk')
             updateDeviceGroupBulk: {url: 'rest/private/devices/groupBulk', method: 'POST'},
             getDeviceApplicationSettings: {url: 'rest/private/devices/:id/applicationSettings', method: 'GET'},
             saveDeviceApplicationSettings: {url: 'rest/private/devices/:id/applicationSettings', method: 'POST'},
-            notifyDeviceOnAppSettingsUpdate: {url: 'rest/private/devices/:id/applicationSettings/notify', method: 'POST'}
+            notifyDeviceOnAppSettingsUpdate: {url: 'rest/private/devices/:id/applicationSettings/notify', method: 'POST'},
+            getConfigOverrides: {url: 'rest/private/devices/:id/configOverrides', method: 'GET'},
+            saveConfigOverrides: {url: 'rest/private/devices/:id/configOverrides', method: 'POST'}
         });
     })
     .factory('configurationService', function ($resource) {

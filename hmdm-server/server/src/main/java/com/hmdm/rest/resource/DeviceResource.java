@@ -38,6 +38,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hmdm.notification.PushService;
 import com.hmdm.persistence.*;
 import com.hmdm.persistence.domain.*;
@@ -66,6 +68,7 @@ public class DeviceResource {
     private ConfigurationFileDAO configurationFileDAO;
     private CommonDAO commonDAO;
     private UnsecureDAO unsecureDAO;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * <p>A constructor required by Swagger.</p>
@@ -170,6 +173,22 @@ public class DeviceResource {
             return Response.OK(deviceView);
         } catch (Exception e) {
             log.error("Cannot find device by number: " + number);
+            return Response.DEVICE_NOT_FOUND_ERROR();
+        }
+    }
+
+    @GET
+    @Path("/id/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDeviceById(@PathParam("id") @ApiParam("Device ID") Integer id) {
+        try {
+            Device device = this.deviceDAO.getDeviceById(id);
+            if (device == null) {
+                return Response.DEVICE_NOT_FOUND_ERROR();
+            }
+            return Response.OK(device);
+        } catch (Exception e) {
+            log.error("Cannot find device by id: " + id, e);
             return Response.DEVICE_NOT_FOUND_ERROR();
         }
     }
@@ -324,6 +343,52 @@ public class DeviceResource {
                 !java.util.Objects.equals(oldDevice.getLocationLatitude(), newDevice.getLocationLatitude()) ||
                 !java.util.Objects.equals(oldDevice.getLocationLongitude(), newDevice.getLocationLongitude()) ||
                 !java.util.Objects.equals(oldDevice.getLocationRadius(), newDevice.getLocationRadius());
+    }
+
+    @GET
+    @Path("/{id}/configOverrides")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDeviceConfigOverrides(@PathParam("id") @ApiParam("Device ID") Integer id) {
+        try {
+            Device device = this.deviceDAO.getDeviceById(id);
+            if (device == null) {
+                return Response.DEVICE_NOT_FOUND_ERROR();
+            }
+            String configOverrides = device.getConfigOverrides();
+            Map<String, Object> overrides = configOverrides == null || configOverrides.trim().isEmpty()
+                    ? new HashMap<>()
+                    : objectMapper.readValue(configOverrides, new TypeReference<Map<String, Object>>() {});
+            return Response.OK(overrides);
+        } catch (Exception e) {
+            log.error("Failed to load tablet configuration overrides for device #{}", id, e);
+            return Response.INTERNAL_ERROR();
+        }
+    }
+
+    @POST
+    @Path("/{id}/configOverrides")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response saveDeviceConfigOverrides(@PathParam("id") @ApiParam("Device ID") Integer id,
+                                              Map<String, Object> overrides) {
+        try {
+            final boolean canEditDevices = SecurityContext.get().hasPermission("edit_devices");
+            if (!canEditDevices) {
+                log.error("Unauthorized attempt to edit tablet configuration overrides",
+                        SecurityException.onCustomerDataAccessViolation(id, "device"));
+                return Response.PERMISSION_DENIED();
+            }
+
+            String configOverrides = overrides == null || overrides.isEmpty()
+                    ? null
+                    : objectMapper.writeValueAsString(overrides);
+            this.deviceDAO.updateDeviceConfigOverrides(id, configOverrides);
+            this.pushService.notifyDeviceOnSettingUpdate(id);
+            return Response.OK(overrides == null ? new HashMap<>() : overrides);
+        } catch (Exception e) {
+            log.error("Failed to save tablet configuration overrides for device #{}", id, e);
+            return Response.INTERNAL_ERROR();
+        }
     }
 
     // =================================================================================================================

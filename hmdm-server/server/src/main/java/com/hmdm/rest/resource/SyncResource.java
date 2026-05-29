@@ -114,6 +114,23 @@ public class SyncResource {
     private static final String HEADER_ENROLLMENT_SIGNATURE = "X-Request-Signature";
     private static final String HEADER_RESPONSE_SIGNATURE = "X-Response-Signature";
 
+    private static final Set<String> DEVICE_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
+            "backgroundColor", "textColor", "backgroundImageUrl", "iconSize", "desktopHeader", "desktopHeaderTemplate", "title",
+            "requestUpdates", "disableLocation", "appPermissions",
+            "locationSettingsEnabled", "locationLatitude", "locationLongitude", "locationRadius",
+            "pushOptions", "keepaliveTime", "autoBrightness", "brightness",
+            "manageTimeout", "timeout", "lockVolume", "manageVolume", "volume",
+            "passwordMode", "orientation", "displayStatus", "runDefaultLauncher",
+            "disableScreenshots", "autostartForeground", "timeZone", "allowedClasses",
+            "newServerUrl", "lockSafeSettings", "permissive", "kioskExit", "showWifi",
+            "gps", "bluetooth", "wifi", "mobileData", "usbStorage",
+            "kioskMode", "lockDefaultLauncher", "kioskHome", "kioskRecents",
+            "kioskNotifications", "kioskSystemInfo", "kioskKeyguard", "kioskLockButtons",
+            "kioskScreenOn", "mainApp", "systemUpdateType", "systemUpdateFrom",
+            "systemUpdateTo", "scheduleAppUpdate", "appUpdateFrom", "appUpdateTo",
+            "downloadUpdates", "restrictions"
+    ));
+
     private String mobileAppName;
     private String vendor;
 
@@ -432,6 +449,8 @@ public class SyncResource {
         data.setKioskScreenOn(configuration.getKioskScreenOn() != null && configuration.getKioskScreenOn() ? true : null);
         data.setRestrictions(configuration.getRestrictions());
 
+        applyDeviceConfigOverrides(dbDevice, data);
+
         if (settings != null) {
             if (settings.isCustomSend1()) {
                 data.setCustom1(dbDevice.getCustom1());
@@ -522,6 +541,124 @@ public class SyncResource {
 
         return Response.OK(syncResponse);
 
+    }
+
+    private void applyDeviceConfigOverrides(Device dbDevice, SyncResponse data) {
+        if (dbDevice.getConfigOverrides() == null || dbDevice.getConfigOverrides().trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> overrides = objectMapper.readValue(dbDevice.getConfigOverrides(), Map.class);
+            for (Map.Entry<String, Object> override : overrides.entrySet()) {
+                if (!DEVICE_OVERRIDE_FIELDS.contains(override.getKey())) {
+                    continue;
+                }
+                applyDeviceConfigOverride(data, override.getKey(), override.getValue());
+            }
+        } catch (Exception e) {
+            logger.error("Device {}: failed to apply tablet configuration overrides", dbDevice.getNumber(), e);
+        }
+    }
+
+    private void applyDeviceConfigOverride(SyncResponse data, String key, Object value) {
+        switch (key) {
+            case "backgroundColor": data.setBackgroundColor(asString(value)); break;
+            case "textColor": data.setTextColor(asString(value)); break;
+            case "backgroundImageUrl": data.setBackgroundImageUrl(asString(value)); break;
+            case "iconSize": data.setIconSize(asString(value)); break;
+            case "desktopHeader": data.setTitle(asString(value)); break;
+            case "desktopHeaderTemplate": data.setTitle(asString(value)); break;
+            case "title": data.setTitle(asString(value)); break;
+            case "requestUpdates": data.setRequestUpdates(asString(value)); break;
+            case "disableLocation": data.setDisableLocation(asBoolean(value)); break;
+            case "appPermissions": data.setAppPermissions(asString(value)); break;
+            case "locationSettingsEnabled": data.setLocationSettingsEnabled(asBoolean(value)); break;
+            case "locationLatitude": data.setLocationLatitude(asDouble(value)); break;
+            case "locationLongitude": data.setLocationLongitude(asDouble(value)); break;
+            case "locationRadius": data.setLocationRadius(asInteger(value)); break;
+            case "pushOptions": data.setPushOptions(asString(value)); break;
+            case "keepaliveTime": data.setKeepaliveTime(asInteger(value)); break;
+            case "autoBrightness": data.setAutoBrightness(asBoolean(value)); break;
+            case "brightness": data.setBrightness(asInteger(value)); break;
+            case "manageTimeout": data.setManageTimeout(asBoolean(value)); break;
+            case "timeout": data.setTimeout(asInteger(value)); break;
+            case "lockVolume": data.setLockVolume(asBoolean(value)); break;
+            case "manageVolume": data.setManageVolume(asBoolean(value)); break;
+            case "volume": data.setVolume(asInteger(value)); break;
+            case "passwordMode": data.setPasswordMode(asString(value)); break;
+            case "orientation": data.setOrientation(asInteger(value)); break;
+            case "displayStatus": data.setDisplayStatus(asBoolean(value)); break;
+            case "runDefaultLauncher": data.setRunDefaultLauncher(asBoolean(value)); break;
+            case "disableScreenshots": data.setDisableScreenshots(asBoolean(value)); break;
+            case "autostartForeground": data.setAutostartForeground(asBoolean(value)); break;
+            case "timeZone": data.setTimeZone(asString(value)); break;
+            case "allowedClasses": data.setAllowedClasses(asString(value)); break;
+            case "newServerUrl": data.setNewServerUrl(asString(value)); break;
+            case "lockSafeSettings": data.setLockSafeSettings(asBoolean(value)); break;
+            case "permissive": data.setPermissive(asBoolean(value)); break;
+            case "kioskExit": data.setKioskExit(asBoolean(value)); break;
+            case "showWifi": data.setShowWifi(asBoolean(value)); break;
+            case "gps": data.setGps(asBoolean(value)); break;
+            case "bluetooth": data.setBluetooth(asBoolean(value)); break;
+            case "wifi": data.setWifi(asBoolean(value)); break;
+            case "mobileData": data.setMobileData(asBoolean(value)); break;
+            case "usbStorage": data.setUsbStorage(asBoolean(value)); break;
+            case "kioskMode": data.setKioskMode(Boolean.TRUE.equals(asBoolean(value))); break;
+            case "lockDefaultLauncher": data.setLockDefaultLauncher(Boolean.TRUE.equals(asBoolean(value))); break;
+            case "kioskHome": data.setKioskHome(asBoolean(value)); break;
+            case "kioskRecents": data.setKioskRecents(asBoolean(value)); break;
+            case "kioskNotifications": data.setKioskNotifications(asBoolean(value)); break;
+            case "kioskSystemInfo": data.setKioskSystemInfo(asBoolean(value)); break;
+            case "kioskKeyguard": data.setKioskKeyguard(asBoolean(value)); break;
+            case "kioskLockButtons": data.setKioskLockButtons(asBoolean(value)); break;
+            case "kioskScreenOn": data.setKioskScreenOn(asBoolean(value)); break;
+            case "mainApp": data.setMainApp(asString(value)); break;
+            case "systemUpdateType": data.setSystemUpdateType(asInteger(value) == null ? 0 : asInteger(value)); break;
+            case "systemUpdateFrom": data.setSystemUpdateFrom(asString(value)); break;
+            case "systemUpdateTo": data.setSystemUpdateTo(asString(value)); break;
+            case "scheduleAppUpdate": data.setScheduleAppUpdate(asBoolean(value)); break;
+            case "appUpdateFrom": data.setAppUpdateFrom(asString(value)); break;
+            case "appUpdateTo": data.setAppUpdateTo(asString(value)); break;
+            case "downloadUpdates": data.setDownloadUpdates(asString(value)); break;
+            case "restrictions": data.setRestrictions(asString(value)); break;
+            default: break;
+        }
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Boolean asBoolean(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return Boolean.valueOf(String.valueOf(value));
+    }
+
+    private Integer asInteger(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.valueOf(String.valueOf(value));
+    }
+
+    private Double asDouble(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        return Double.valueOf(String.valueOf(value));
     }
 
     // =================================================================================================================

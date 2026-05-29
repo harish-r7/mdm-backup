@@ -1,0 +1,43 @@
+<div class='tablet-config-picker'>
+    <div class='tablet-config-picker-header'>
+        <div class='tablet-config-picker-icon'>
+            <span class='glyphicon glyphicon-phone'></span>
+        </div>
+        <div>
+            <div class='tablet-config-picker-title'>Select tablet</div>
+            <div class='tablet-config-picker-subtitle'>Filter by group and open tablet-wise settings.</div>
+        </div>
+    </div>
+
+    <div ng-show='errorMessage' class='tablet-config-picker-error'>
+        <span>{{errorMessage}}</span>
+    </div>
+
+    <div class='modal-body tablet-config-picker-body'>
+        <form class='form-horizontal'>
+            <div class='tablet-config-field'>
+                <label class='control-label'>Group</label>
+                <select class='form-control'
+                        ng-model='selected.groupId'
+                        ng-options='group.id as group.name for group in groups'
+                        ng-change='loadDevices()'></select>
+            </div>
+
+            <div class='tablet-config-field'>
+                <label class='control-label'>Tablet</label>
+                <select class='form-control'
+                        ng-model='selected.deviceId'
+                        ng-options='device.id as device.number for device in devices'>
+                    <option value=''>Select tablet</option>
+                </select>
+                <div class='tablet-config-muted' ng-if='devices.length === 0'>No tablets found for this group.</div>
+                <div class='tablet-config-muted' ng-if='devices.length > 0'>{{devices.length}} tablet(s) available.</div>
+            </div>
+
+            <div class='tablet-config-actions'>
+                <button type='button' class='btn btn-default tablet-config-cancel' ng-click='closeModal()'>Cancel</button>
+                <button type='submit' class='btn btn-primary tablet-config-open' ng-click='open()'>Open settings</button>
+            </div>
+        </form>
+    </div>
+</div>

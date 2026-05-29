@@ -140,6 +140,10 @@ public interface DeviceMapper {
     void updateDeviceConfiguration(@Param("deviceId") Integer deviceId,
                                    @Param("configurationId") Integer configurationId);
 
+    @Update({"UPDATE devices SET configOverrides = #{configOverrides} WHERE id = #{deviceId}"})
+    void updateDeviceConfigOverrides(@Param("deviceId") Integer deviceId,
+                                     @Param("configOverrides") String configOverrides);
+
     @Update({"UPDATE devices SET description = #{description} WHERE id = #{deviceId}"})
     void updateDeviceDescription(@Param("deviceId") Integer deviceId,
                                  @Param("description") String newDeviceDesc);

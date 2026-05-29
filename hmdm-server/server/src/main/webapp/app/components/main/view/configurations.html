@@ -13,6 +13,12 @@
 
         <div class='configurations-search-buttons'>
             <button type='button' class='btn btn-default' ng-if="hasPermission('add_config')" ng-click='addConfiguration()' localized>button.add</button>
+            <button type='button' class='btn btn-default tablet-wise-button'
+                    ng-if="hasPermission('edit_devices')"
+                    ng-click='openTabletConfiguration()'>
+                <span class='glyphicon glyphicon-phone'></span>
+                <span>Tablet wise</span>
+            </button>
         </div>
     </div>
 

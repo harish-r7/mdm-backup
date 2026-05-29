@@ -79,6 +79,17 @@ angular.module('headwind-kiosk')
 
         };
 
+        $scope.openTabletConfiguration = function () {
+            var modalInstance = $modal.open({
+                templateUrl: 'app/components/main/view/modal/selectDeviceConfiguration.html',
+                controller: 'SelectDeviceConfigurationModalController'
+            });
+
+            modalInstance.result.then(function (deviceId) {
+                $state.transitionTo('deviceConfigEditor', {"deviceId": deviceId});
+            });
+        };
+
         $scope.copyConfiguration = function (configuration) {
             var modalInstance = $modal.open({
                 templateUrl: 'app/components/main/view/modal/copyConfiguration.html',
@@ -112,6 +123,55 @@ angular.module('headwind-kiosk')
 
         $scope.init(false);
     })
+    .controller('SelectDeviceConfigurationModalController',
+        function ($scope, $modalInstance, deviceService, groupService) {
+            $scope.groups = [];
+            $scope.devices = [];
+            $scope.selected = {
+                groupId: 0,
+                deviceId: null
+            };
+
+            groupService.getAllGroups(function (response) {
+                if (response.status === 'OK') {
+                    $scope.groups = [{id: 0, name: 'All groups'}].concat(response.data || []);
+                }
+            });
+
+            $scope.loadDevices = function () {
+                var request = {
+                    pageNum: 1,
+                    pageSize: 1000,
+                    sortBy: 'NUMBER',
+                    sortDir: 'ASC',
+                    value: null
+                };
+                if ($scope.selected.groupId && $scope.selected.groupId > 0) {
+                    request.groupId = $scope.selected.groupId;
+                }
+                deviceService.getAllDevices(request, function (response) {
+                    if (response.status === 'OK' || response.data) {
+                        $scope.devices = response.data && response.data.devices ? response.data.devices.items : [];
+                        $scope.selected.deviceId = null;
+                    }
+                });
+            };
+
+            $scope.open = function () {
+                $scope.errorMessage = '';
+                if (!$scope.selected.deviceId) {
+                    $scope.errorMessage = 'Select tablet';
+                    return;
+                }
+                $modalInstance.close($scope.selected.deviceId);
+            };
+
+            $scope.closeModal = function () {
+                $modalInstance.dismiss();
+            };
+
+            $scope.loadDevices();
+        })
     .controller('CopyConfigurationModalController',
         function ($scope, $modalInstance, configurationService, configuration, localization) {
 
@@ -309,7 +369,7 @@ angular.module('headwind-kiosk')
     })
     .controller('ConfigurationEditorController',
         function ($scope, configurationService, settingsService, $stateParams, $state, $rootScope, $window, $timeout,
-                  $transitions, localization, confirmModal, alertService, $modal, appVersionComparisonService, settingsService) {
+                  $transitions, localization, confirmModal, alertService, $modal, appVersionComparisonService, deviceService) {
 
             $scope.successMessage = null;
 
@@ -785,6 +845,38 @@ angular.module('headwind-kiosk')
                         request.orientation = null;
                     }
 
+                    if ($scope.deviceConfigMode) {
+                        var overrides = buildDeviceOverrides(request);
+                        deviceService.saveConfigOverrides({"id": $stateParams.deviceId}, overrides, function (response) {
+                            if (response.status === 'OK') {
+                                deviceService.saveDeviceApplicationSettings({"id": $stateParams.deviceId}, request.applicationSettings || [], function () {
+                                    deviceService.notifyDeviceOnAppSettingsUpdate({"id": $stateParams.deviceId}, function () {});
+                                    $scope.saved = true;
+                                    if (doClose) {
+                                        $rootScope["configurationsMessage"] = 'Tablet configuration saved';
+                                        $scope.close();
+                                    } else {
+                                        $scope.successMessage = 'Tablet configuration saved';
+                                        $scope.configurationForm.$dirty = false;
+                                        let $timeout1 = $timeout(function () {
+                                            $scope.successMessage = null;
+                                        }, 5000);
+                                        $scope.$on('$destroy', function () {
+                                            $timeout.cancel($timeout1);
+                                        });
+                                    }
+                                }, function () {
+                                    $scope.errorMessage = localization.localize('error.request.failure');
+                                });
+                            } else {
+                                $scope.errorMessage = localization.localize(response.message);
+                            }
+                        }, function () {
+                            $scope.errorMessage = localization.localize('error.request.failure');
+                        });
+                        return;
+                    }
+
                     configurationService.updateConfiguration(request, function (response) {
                         if (response.status === 'OK') {
                             $scope.saved = true;
@@ -1258,6 +1350,7 @@ angular.module('headwind-kiosk')
 
             // Entry point
             var configId = $stateParams.id;
+            $scope.deviceConfigMode = !!$stateParams.deviceId;
             setTimeout(function () {
                 angular.element(document.querySelector('#password-c')).attr('type', 'password');
             }, 300);
@@ -1284,6 +1377,50 @@ angular.module('headwind-kiosk')
             var contentAppSelected = false;
             var allApplications;
             let bConfigurationWasLost = false;
+            var baseConfiguration = null;
+            var deviceOverrideFields = [
+                'backgroundColor', 'textColor', 'backgroundImageUrl', 'iconSize', 'desktopHeader', 'desktopHeaderTemplate',
+                'requestUpdates', 'disableLocation', 'appPermissions', 'locationSettingsEnabled', 'locationLatitude',
+                'locationLongitude', 'locationRadius', 'pushOptions', 'keepaliveTime', 'autoBrightness', 'brightness',
+                'manageTimeout', 'timeout', 'lockVolume', 'manageVolume', 'volume', 'passwordMode', 'orientation',
+                'displayStatus', 'runDefaultLauncher', 'disableScreenshots', 'autostartForeground', 'timeZone',
+                'allowedClasses', 'newServerUrl', 'lockSafeSettings', 'permissive', 'kioskExit', 'showWifi',
+                'gps', 'bluetooth', 'wifi', 'mobileData', 'usbStorage', 'kioskMode', 'lockDefaultLauncher',
+                'kioskHome', 'kioskRecents', 'kioskNotifications', 'kioskSystemInfo', 'kioskKeyguard',
+                'kioskLockButtons', 'kioskScreenOn', 'mainApp', 'systemUpdateType', 'systemUpdateFrom',
+                'systemUpdateTo', 'scheduleAppUpdate', 'appUpdateFrom', 'appUpdateTo', 'downloadUpdates',
+                'restrictions'
+            ];
+
+            var buildDeviceOverrides = function (request) {
+                var overrides = {};
+                deviceOverrideFields.forEach(function (field) {
+                    if (!request.hasOwnProperty(field)) {
+                        return;
+                    }
+                    var baseValue = baseConfiguration ? baseConfiguration[field] : undefined;
+                    var requestValue = request[field];
+                    if (angular.toJson(baseValue) !== angular.toJson(requestValue)) {
+                        overrides[field] = requestValue;
+                    }
+                });
+                return overrides;
+            };
+
+            var mergeDeviceApplicationSettings = function (groupSettings, deviceSettings) {
+                var merged = [];
+                var deviceKeys = {};
+                (deviceSettings || []).forEach(function (setting) {
+                    deviceKeys[setting.applicationId + ',' + setting.name] = true;
+                    merged.push(setting);
+                });
+                (groupSettings || []).forEach(function (setting) {
+                    if (!deviceKeys[setting.applicationId + ',' + setting.name]) {
+                        merged.push(setting);
+                    }
+                });
+                return merged;
+            };
 
             $scope.configuration = {
                 defaultFilePath: "/Download/"
@@ -1307,7 +1444,47 @@ angular.module('headwind-kiosk')
 
             $scope.dates = {};
 
-            if (configId != 0) {
+            if ($scope.deviceConfigMode) {
+                deviceService.getDeviceById({"id": $stateParams.deviceId}, function (deviceResponse) {
+                    if (deviceResponse.status === 'OK' && deviceResponse.data) {
+                        $scope.deviceConfigDevice = deviceResponse.data;
+                        configId = $scope.deviceConfigDevice.configurationId;
+                        configurationService.getById({"id": configId}, function (response) {
+                            if (response.data) {
+                                baseConfiguration = angular.copy(response.data);
+                                deviceService.getConfigOverrides({"id": $stateParams.deviceId}, function (overridesResponse) {
+                                    var overrides = overridesResponse.data || {};
+                                    $scope.configuration = angular.extend(response.data, overrides);
+
+                                    deviceService.getDeviceApplicationSettings({"id": $stateParams.deviceId}, function (appSettingsResponse) {
+                                        $scope.configuration.applicationSettings = mergeDeviceApplicationSettings(
+                                            baseConfiguration.applicationSettings,
+                                            appSettingsResponse.data || []
+                                        );
+                                        filterApplicationSettings();
+                                    });
+                                    filterFiles();
+                                    updateMqttHint();
+
+                                    $scope.dates.systemUpdateFrom = d1;
+                                    $scope.dates.systemUpdateTo = d2;
+                                    $scope.dates.appUpdateFrom = d1;
+                                    $scope.dates.appUpdateTo = d2;
+
+                                    if ($scope.configuration.timeZone === null) {
+                                        $scope.configuration.timeZoneMode = 'default';
+                                    } else if ($scope.configuration.timeZone === 'auto') {
+                                        $scope.configuration.timeZoneMode = 'auto';
+                                    } else {
+                                        $scope.configuration.timeZoneMode = 'manual';
+                                    }
+                                });
+                                $scope.loadApps(configId);
+                            }
+                        });
+                    }
+                });
+            } else if (configId != 0) {
                 configurationService.getById({"id": configId}, function (response) {
                     if (response.data) {
                         $scope.configuration = response.data;

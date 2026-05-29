@@ -2670,4 +2670,19 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="28.05.26-15:45-device-config-overrides" author="custom" context="common">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="devices" columnName="configoverrides"/>
+            </not>
+        </preConditions>
+        <comment>Column,new: devices#configOverrides for tablet-specific configuration overrides</comment>
+        <sql>
+            ALTER TABLE devices ADD COLUMN configOverrides TEXT;
+        </sql>
+        <rollback>
+            ALTER TABLE devices DROP COLUMN configOverrides;
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

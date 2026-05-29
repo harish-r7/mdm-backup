@@ -182,6 +182,15 @@ public class DeviceDAO extends AbstractDAO<Device> {
         );
     }
 
+    public void updateDeviceConfigOverrides(Integer deviceId, String configOverrides) {
+        updateById(
+                deviceId,
+                this.mapper::getDeviceById,
+                device -> this.mapper.updateDeviceConfigOverrides(device.getId(), configOverrides),
+                SecurityException::onDeviceAccessViolation
+        );
+    }
+
     public Device getDeviceByNumber(String number) {
         return getSingleRecord(() -> this.mapper.getDeviceByNumber(number), SecurityException::onDeviceAccessViolation);
     }
@@ -193,6 +202,9 @@ public class DeviceDAO extends AbstractDAO<Device> {
     @Transactional
     public void insertDevice(Device device) {
         insertRecord(device, d -> {
+            if (d.getLocationSettingsEnabled() == null) {
+                d.setLocationSettingsEnabled(false);
+            }
             d.updateFastSearch(fastSearchChars);
             this.mapper.insertDevice(d);
             if (d.getGroups() != null && !d.getGroups().isEmpty()) {
@@ -215,6 +227,7 @@ public class DeviceDAO extends AbstractDAO<Device> {
     public void updateDevice(Device device) {
         updateById(device.getId(), this.mapper::getDeviceById, dbDevice -> {
             device.setCustomerId(dbDevice.getCustomerId());
+            device.setConfigOverrides(dbDevice.getConfigOverrides());
             device.updateFastSearch(fastSearchChars);
 
             final Integer currentUserId = SecurityContext.get().getCurrentUser().get().getId();

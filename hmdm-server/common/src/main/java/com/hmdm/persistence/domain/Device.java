@@ -74,6 +74,8 @@ public class Device implements CustomerData, Serializable {
     private Double locationLongitude;
     @ApiModelProperty("Device-specific allowed distance from configured location, in meters")
     private Integer locationRadius;
+    @ApiModelProperty("Device-specific configuration overrides stored as JSON")
+    private String configOverrides;
 
     // Many-to-many relations
     @ApiModelProperty("A list of groups assigned to device")
@@ -313,6 +315,14 @@ public class Device implements CustomerData, Serializable {
         this.locationRadius = locationRadius;
     }
 
+    public String getConfigOverrides() {
+        return configOverrides;
+    }
+
+    public void setConfigOverrides(String configOverrides) {
+        this.configOverrides = configOverrides;
+    }
+
     public List<LookupItem> getGroups() {
         return groups;
     }
@@ -435,6 +445,7 @@ public class Device implements CustomerData, Serializable {
                 ", locationLatitude=" + locationLatitude +
                 ", locationLongitude=" + locationLongitude +
                 ", locationRadius=" + locationRadius +
+                ", configOverrides='" + configOverrides + '\'' +
                 ", groups=" + groups +
                 ", ids=" + ids +
                 ", configuration=" + configuration +
